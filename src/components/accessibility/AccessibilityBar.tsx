@@ -1,0 +1,114 @@
+import React from 'react';
+import { useAccessibility, FontSizeOption } from '../../context/AccessibilityContext';
+import { audioService } from '../../services/audioService';
+import { Eye, Volume2, VolumeX, Type, MessageSquare } from 'lucide-react';
+import { AppLanguage, QuechuaDialect } from '../../types';
+
+interface AccessibilityBarProps {
+  appLang: AppLanguage;
+  dialect: QuechuaDialect;
+}
+
+export const AccessibilityBar: React.FC<AccessibilityBarProps> = ({
+  appLang,
+  dialect,
+}) => {
+  const {
+    highContrast,
+    toggleHighContrast,
+    fontSize,
+    setFontSize,
+    screenReaderVoice,
+    toggleScreenReaderVoice,
+    setIsCaaModalOpen,
+  } = useAccessibility();
+
+  const cycleFontSize = () => {
+    audioService.playPop();
+    const next: FontSizeOption =
+      fontSize === 'normal' ? 'large' : fontSize === 'large' ? 'extralarge' : 'normal';
+    setFontSize(next);
+    audioService.speakSpanish(
+      next === 'normal'
+        ? 'Tamaño de letra normal'
+        : next === 'large'
+        ? 'Tamaño de letra grande'
+        : 'Tamaño de letra extra grande'
+    );
+  };
+
+  return (
+    <div
+      role="region"
+      aria-label="Herramientas de accesibilidad universal"
+      className="bg-amber-600/90 dark:bg-slate-900 border-b border-amber-700/40 dark:border-slate-800 text-white py-1.5 px-4 text-xs"
+    >
+      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+        {/* Left Accessibility quick toggles */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[11px] font-bold text-amber-200 dark:text-amber-400 mr-1 flex items-center gap-1">
+            <span>♿ Accesibilidad:</span>
+          </span>
+
+          {/* High Contrast button */}
+          <button
+            onClick={toggleHighContrast}
+            aria-pressed={highContrast}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-bold text-[11px] transition active:scale-95 ${
+              highContrast
+                ? 'bg-yellow-400 text-black border-2 border-white'
+                : 'bg-amber-700/80 hover:bg-amber-700 text-white'
+            }`}
+            title="Modo Alto Contraste para baja visión"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            <span>{highContrast ? 'Alto Contraste: SÍ' : 'Alto Contraste'}</span>
+          </button>
+
+          {/* Font Size button */}
+          <button
+            onClick={cycleFontSize}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-700/80 hover:bg-amber-700 text-white font-bold text-[11px] transition active:scale-95"
+            title="Cambiar tamaño de letra (A / A+ / A++)"
+          >
+            <Type className="w-3.5 h-3.5" />
+            <span>
+              Letra: {fontSize === 'normal' ? 'Normal' : fontSize === 'large' ? 'Grande' : 'Muy Grande'}
+            </span>
+          </button>
+
+          {/* Voice Screen Reader button */}
+          <button
+            onClick={toggleScreenReaderVoice}
+            aria-pressed={screenReaderVoice}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-bold text-[11px] transition active:scale-95 ${
+              screenReaderVoice
+                ? 'bg-emerald-400 text-black font-extrabold'
+                : 'bg-amber-700/80 hover:bg-amber-700 text-white'
+            }`}
+            title="Lector de voz para personas con discapacidad visual"
+          >
+            <Volume2 className="w-3.5 h-3.5" />
+            <span>{screenReaderVoice ? 'Lector de Voz: ACTIVO' : 'Lector de Voz'}</span>
+          </button>
+        </div>
+
+        {/* Right buttons: Non-verbal CAA board */}
+        <div className="flex items-center gap-1.5 ml-auto">
+          {/* Non-verbal CAA board */}
+          <button
+            onClick={() => {
+              audioService.playPop();
+              setIsCaaModalOpen(true);
+            }}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-pink-600 hover:bg-pink-700 text-white font-bold text-[11px] shadow-sm transition active:scale-95"
+            title="Tablero de habla para personas que no pueden hablar"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>🗣️ Tablero de Habla (No verbal)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

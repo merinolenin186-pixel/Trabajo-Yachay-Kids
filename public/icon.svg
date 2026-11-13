@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Warm Andean Amber Background with rounded squircle -->
+  <rect width="512" height="512" rx="128" fill="#f59e0b" />
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="none" stroke="#fbbf24" stroke-width="12" />
+
+  <!-- Sun Rays -->
+  <g stroke="#ffffff" stroke-width="24" stroke-linecap="round">
+    <line x1="256" y1="50" x2="256" y2="90" />
+    <line x1="256" y1="422" x2="256" y2="462" />
+    <line x1="50" y1="256" x2="90" y2="256" />
+    <line x1="422" y1="256" x2="462" y2="256" />
+    <line x1="110" y1="110" x2="140" y2="140" />
+    <line x1="372" y1="372" x2="402" y2="402" />
+    <line x1="110" y1="402" x2="140" y2="372" />
+    <line x1="372" y1="140" x2="402" y2="110" />
+  </g>
+
+  <!-- Big Smiling Sun Center (Tayta Inti) -->
+  <circle cx="256" cy="256" r="140" fill="#fcd34d" stroke="#d97706" stroke-width="14" />
+
+  <!-- Rosy Andean Cheeks -->
+  <circle cx="195" cy="280" r="24" fill="#f87171" opacity="0.8" />
+  <circle cx="317" cy="280" r="24" fill="#f87171" opacity="0.8" />
+
+  <!-- Joyful Eyes -->
+  <circle cx="205" cy="240" r="16" fill="#78350f" />
+  <circle cx="210" cy="232" r="6" fill="#ffffff" />
+  <circle cx="307" cy="240" r="16" fill="#78350f" />
+  <circle cx="312" cy="232" r="6" fill="#ffffff" />
+
+  <!-- Big Warm Smile -->
+  <path d="M 205 285 Q 256 345 307 285" stroke="#78350f" stroke-width="14" stroke-linecap="round" fill="none" />
+
+  <!-- Traditional Chullo headband ornament -->
+  <path d="M 180 160 Q 256 130 332 160" stroke="#dc2626" stroke-width="16" stroke-linecap="round" fill="none" />
+  <path d="M 200 156 Q 256 134 312 156" stroke="#10b981" stroke-width="8" stroke-linecap="round" fill="none" />
+</svg>

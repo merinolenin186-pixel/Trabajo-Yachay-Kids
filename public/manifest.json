@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "name": "Yachay Kids - Quechua Bilingüe",
+  "short_name": "YachayKids",
+  "description": "Aplicación móvil educativa, inclusiva y bilingüe para niños quechuahablantes del Perú. 100% offline.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fffbeb",
+  "theme_color": "#d97706",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

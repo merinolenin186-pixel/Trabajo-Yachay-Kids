@@ -1,0 +1,6 @@
+{
+  "name": "Yachay Kids - Quechua Bilingüe",
+  "description": "Aplicación móvil educativa, inclusiva y bilingüe para niños quechuahablantes del Perú. 100% offline con juegos, pictogramas, cuentos animados y traductor.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

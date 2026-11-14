@@ -2,11 +2,62 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
+  :root {
+    --yachay-primary: #f59e0b;
+    --yachay-primary-dark: #d97706;
+    --yachay-primary-soft: #fef3c7;
+    --yachay-secondary: #ea580c;
+    --yachay-bg: #fffbeb;
+    --yachay-card: #ffffff;
+    --yachay-header-text: #ffffff;
+  }
+
   body {
     font-family: 'Fredoka', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
   }
+}
+
+/* Custom Admin Theme Application (when non-default palette is selected) */
+html[data-custom-theme="true"]:not(.high-contrast):not(.dark) .yachay-app-shell {
+  background-color: var(--yachay-bg);
+}
+
+html[data-custom-theme="true"]:not(.high-contrast) .yachay-topbar {
+  background-color: var(--yachay-primary) !important;
+  color: var(--yachay-header-text) !important;
+  border-color: var(--yachay-primary-dark) !important;
+}
+
+html[data-custom-theme="true"]:not(.high-contrast) .yachay-accessibility-bar {
+  background-color: var(--yachay-primary-dark) !important;
+  color: var(--yachay-header-text) !important;
+}
+
+html[data-custom-theme="true"]:not(.high-contrast) .yachay-hero-banner {
+  background: linear-gradient(135deg, var(--yachay-primary), var(--yachay-secondary)) !important;
+}
+
+html[data-custom-theme="true"]:not(.high-contrast) .bg-amber-500 {
+  background-color: var(--yachay-primary) !important;
+}
+
+html[data-custom-theme="true"]:not(.high-contrast) .hover\:bg-amber-600:hover {
+  background-color: var(--yachay-primary-dark) !important;
+}
+
+html[data-custom-theme="true"]:not(.high-contrast) .text-amber-600 {
+  color: var(--yachay-primary-dark) !important;
+}
+
+html[data-custom-theme="true"]:not(.high-contrast) .border-amber-400,
+html[data-custom-theme="true"]:not(.high-contrast) .border-amber-500 {
+  border-color: var(--yachay-primary) !important;
+}
+
+html[data-custom-theme="true"]:not(.high-contrast):not(.dark) .yachay-card-surface {
+  background-color: var(--yachay-card) !important;
 }
 
 /* Accessibility: Font Scaling */

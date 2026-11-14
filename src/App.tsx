@@ -20,6 +20,9 @@ import { VideosModule } from './components/videos/VideosModule';
 import { SettingsModule } from './components/settings/SettingsModule';
 import { ApkDownloadModal } from './components/ApkDownloadModal';
 import { AccessibilityProvider, useAccessibility } from './context/AccessibilityContext';
+import { AdminProvider, useAdmin } from './context/AdminContext';
+import { AdminLoginModal } from './components/admin/AdminLoginModal';
+import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AccessibilityBar } from './components/accessibility/AccessibilityBar';
 import { NonVerbalBoardModal } from './components/accessibility/NonVerbalBoardModal';
 import { audioService } from './services/audioService';
@@ -40,6 +43,13 @@ function AppContent() {
   const [isMuted, setIsMuted] = useState(false);
 
   const { isCaaModalOpen, setIsCaaModalOpen, screenReaderVoice, speakAccessible } = useAccessibility();
+  const {
+    isAuthenticated,
+    isLoginModalOpen,
+    setIsLoginModalOpen,
+    hiddenOptions,
+    customTexts,
+  } = useAdmin();
 
   // Initialize from storage or show first-time welcome modal
   useEffect(() => {
@@ -60,6 +70,25 @@ function AppContent() {
       setIsLanguageModalOpen(true);
     }
   }, []);
+
+  // Ensure current tab stays valid if hidden by admin or logged out from admin tab
+  useEffect(() => {
+    if (currentTab === 'admin' && !isAuthenticated) {
+      setCurrentTab('settings');
+      return;
+    }
+    if (
+      currentTab !== 'settings' &&
+      currentTab !== 'admin' &&
+      hiddenOptions.mainTabs.includes(currentTab)
+    ) {
+      const fallbackOrder: MainTab[] = ['games', 'translator', 'pictograms', 'videos', 'settings'];
+      const nextVisible = fallbackOrder.find(
+        t => t === 'settings' || !hiddenOptions.mainTabs.includes(t)
+      );
+      setCurrentTab(nextVisible || 'settings');
+    }
+  }, [currentTab, isAuthenticated, hiddenOptions.mainTabs]);
 
   const handleSelectLanguage = (lang: AppLanguage, dial: QuechuaDialect) => {
     setAppLang(lang);
@@ -94,18 +123,27 @@ function AppContent() {
           ? 'Sección Pictogramas'
           : tab === 'videos'
           ? 'Sección Cuentos y Videos'
+          : tab === 'admin'
+          ? 'Panel de Administrador'
           : 'Sección Configuración';
       speakAccessible(tabName);
     }
   };
 
+  const getFallbackTab = (): MainTab => {
+    const order: MainTab[] = ['games', 'translator', 'pictograms', 'videos', 'settings'];
+    return order.find(t => t === 'settings' || !hiddenOptions.mainTabs.includes(t)) || 'settings';
+  };
+
   return (
-    <div className="min-h-screen bg-amber-50/50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-['Fredoka'] antialiased selection:bg-amber-500 selection:text-white pb-20 md:pb-10">
+    <div className="yachay-app-shell min-h-screen bg-amber-50/50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-['Fredoka'] antialiased selection:bg-amber-500 selection:text-white pb-20 md:pb-10">
       {/* Universal Accessibility Toolbar */}
-      <AccessibilityBar
-        appLang={appLang}
-        dialect={dialect}
-      />
+      {hiddenOptions.showAccessibilityBar && (
+        <AccessibilityBar
+          appLang={appLang}
+          dialect={dialect}
+        />
+      )}
 
       {/* Top Bar with 3-Zone Contract */}
       <TopBar
@@ -121,31 +159,39 @@ function AppContent() {
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
         {/* Banner with Offline Indicator & Non-verbal CAA */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-300 dark:border-emerald-700">
-            <WifiOff className="w-3.5 h-3.5" />
-            <span>
-              {appLang === 'quechua'
-                ? 'Mana internetwan purin (100% Offline)'
-                : 'Modo 100% Sin Conexión Activado'}
-            </span>
-          </div>
+        {(hiddenOptions.showOfflineBadge || hiddenOptions.showCaaButton) &&
+          currentTab !== 'admin' && (
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 text-xs">
+              {hiddenOptions.showOfflineBadge ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-300 dark:border-emerald-700">
+                  <WifiOff className="w-3.5 h-3.5" />
+                  <span>
+                    {appLang === 'quechua'
+                      ? 'Mana internetwan purin (100% Offline)'
+                      : 'Modo 100% Sin Conexión Activado'}
+                  </span>
+                </div>
+              ) : (
+                <div />
+              )}
 
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Non-verbal CAA helper button */}
-            <button
-              onClick={() => {
-                audioService.playPop();
-                setIsCaaModalOpen(true);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-sm active:scale-95 transition cursor-pointer"
-              title="Tablero de comunicación para personas no verbales"
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span>Tablero Habla</span>
-            </button>
-          </div>
-        </div>
+              {hiddenOptions.showCaaButton && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => {
+                      audioService.playPop();
+                      setIsCaaModalOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-sm active:scale-95 transition cursor-pointer"
+                    title="Tablero de comunicación para personas no verbales"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Tablero Habla</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
         {/* Tab 1: Educational Games */}
         {currentTab === 'games' && (
@@ -205,7 +251,7 @@ function AppContent() {
           <PictogramsModule appLang={appLang} dialect={dialect} />
         )}
 
-        {/* Tab 4: Bilingual Animated Video Stories */}
+        {/* Tab 4: Bilingual Animated Video Stories & Custom Audios */}
         {currentTab === 'videos' && (
           <VideosModule appLang={appLang} dialect={dialect} />
         )}
@@ -229,6 +275,16 @@ function AppContent() {
             }}
             isMuted={isMuted}
             onToggleMute={handleToggleMute}
+            onOpenAdminPanel={() => handleSelectTab('admin')}
+          />
+        )}
+
+        {/* Tab 6: Administrator CMS Dashboard */}
+        {currentTab === 'admin' && isAuthenticated && (
+          <AdminDashboard
+            appLang={appLang}
+            dialect={dialect}
+            onExitAdmin={() => handleSelectTab(getFallbackTab())}
           />
         )}
       </main>
@@ -237,12 +293,12 @@ function AppContent() {
       <footer className="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 py-6 text-center text-xs text-slate-500 dark:text-slate-400">
         <div className="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
-            <span>Yachay Kids</span>
+            <span>{customTexts.appName || 'Yachay Kids'}</span>
             <span>·</span>
             <span>Perú Suyumanta</span>
           </div>
           <p className="flex items-center gap-1">
-            <span>Inclusión lingüística, visual y accesible para todos los niños</span>
+            <span>{customTexts.footerText}</span>
             <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 inline" />
           </p>
         </div>
@@ -278,14 +334,23 @@ function AppContent() {
         appLang={appLang}
         dialect={dialect}
       />
+
+      {/* Administrator Login Modal */}
+      <AdminLoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onSuccess={() => handleSelectTab('admin')}
+      />
     </div>
   );
 }
 
 export default function App() {
   return (
-    <AccessibilityProvider>
-      <AppContent />
-    </AccessibilityProvider>
+    <AdminProvider>
+      <AccessibilityProvider>
+        <AppContent />
+      </AccessibilityProvider>
+    </AdminProvider>
   );
 }

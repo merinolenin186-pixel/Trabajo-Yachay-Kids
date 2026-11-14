@@ -1,7 +1,8 @@
 import React from 'react';
 import { useAccessibility, FontSizeOption } from '../../context/AccessibilityContext';
+import { useAdmin } from '../../context/AdminContext';
 import { audioService } from '../../services/audioService';
-import { Eye, Volume2, VolumeX, Type, MessageSquare } from 'lucide-react';
+import { Eye, Volume2, Type, MessageSquare } from 'lucide-react';
 import { AppLanguage, QuechuaDialect } from '../../types';
 
 interface AccessibilityBarProps {
@@ -22,6 +23,7 @@ export const AccessibilityBar: React.FC<AccessibilityBarProps> = ({
     toggleScreenReaderVoice,
     setIsCaaModalOpen,
   } = useAccessibility();
+  const { hiddenOptions } = useAdmin();
 
   const cycleFontSize = () => {
     audioService.playPop();
@@ -41,7 +43,7 @@ export const AccessibilityBar: React.FC<AccessibilityBarProps> = ({
     <div
       role="region"
       aria-label="Herramientas de accesibilidad universal"
-      className="bg-amber-600/90 dark:bg-slate-900 border-b border-amber-700/40 dark:border-slate-800 text-white py-1.5 px-4 text-xs"
+      className="yachay-accessibility-bar bg-amber-600/90 dark:bg-slate-900 border-b border-amber-700/40 dark:border-slate-800 text-white py-1.5 px-4 text-xs"
     >
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
         {/* Left Accessibility quick toggles */}
@@ -94,20 +96,22 @@ export const AccessibilityBar: React.FC<AccessibilityBarProps> = ({
         </div>
 
         {/* Right buttons: Non-verbal CAA board */}
-        <div className="flex items-center gap-1.5 ml-auto">
-          {/* Non-verbal CAA board */}
-          <button
-            onClick={() => {
-              audioService.playPop();
-              setIsCaaModalOpen(true);
-            }}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-pink-600 hover:bg-pink-700 text-white font-bold text-[11px] shadow-sm transition active:scale-95"
-            title="Tablero de habla para personas que no pueden hablar"
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            <span>🗣️ Tablero de Habla (No verbal)</span>
-          </button>
-        </div>
+        {hiddenOptions.showCaaButton && (
+          <div className="flex items-center gap-1.5 ml-auto">
+            {/* Non-verbal CAA board */}
+            <button
+              onClick={() => {
+                audioService.playPop();
+                setIsCaaModalOpen(true);
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-pink-600 hover:bg-pink-700 text-white font-bold text-[11px] shadow-sm transition active:scale-95 cursor-pointer"
+              title="Tablero de habla para personas que no pueden hablar"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>🗣️ Tablero de Habla (No verbal)</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

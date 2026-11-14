@@ -12,8 +12,8 @@ import {
   BookOpen,
   Search,
   Sparkles,
-  Layers,
 } from 'lucide-react';
+import { useAdmin } from '../../context/AdminContext';
 
 interface TranslatorModuleProps {
   appLang: AppLanguage;
@@ -26,6 +26,7 @@ export const TranslatorModule: React.FC<TranslatorModuleProps> = ({
   appLang,
   dialect,
 }) => {
+  const { customTexts } = useAdmin();
   const [fromLang, setFromLang] = useState<'es' | 'qu'>('es');
   const [inputText, setInputText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
@@ -186,6 +187,11 @@ export const TranslatorModule: React.FC<TranslatorModuleProps> = ({
             <span className="font-bold text-amber-600 dark:text-amber-400">
               Quechua {dialect === 'chanka' ? 'Chanka (Ayacucho)' : 'Collao (Cusco/Puno)'}
             </span>
+          </p>
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+            {appLang === 'quechua'
+              ? customTexts.translatorDescription.quechua
+              : customTexts.translatorDescription.spanish}
           </p>
         </div>
 

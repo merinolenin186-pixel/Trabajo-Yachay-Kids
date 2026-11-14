@@ -151,6 +151,103 @@ export interface VideoScene {
   subtitlesSpanish: string;
 }
 
-export type MainTab = 'games' | 'translator' | 'pictograms' | 'videos' | 'settings';
+export type MainTab = 'games' | 'translator' | 'pictograms' | 'videos' | 'settings' | 'admin';
 
 export type GameSubTab = 'hub' | 'numbers' | 'memory' | 'colors' | 'animals' | 'foods';
+
+export interface ThemeConfig {
+  presetId: 'inti' | 'titicaca' | 'pachamama' | 'kantuta' | 'kuychi' | 'custom';
+  primaryColor: string;
+  secondaryColor: string;
+  backgroundColor: string;
+  cardColor: string;
+  headerTextColor: string;
+  darkMode: boolean;
+}
+
+export interface CustomTexts {
+  appName: string;
+  heroTitle: BilingualText;
+  heroDescription: BilingualText;
+  videosBannerTitle: BilingualText;
+  videosBannerDescription: BilingualText;
+  pictogramsDescription: BilingualText;
+  translatorDescription: BilingualText;
+  footerText: string;
+}
+
+export interface SubtitleCue {
+  id: string;
+  startTime: number;
+  endTime: number;
+  spanish: string;
+  quechuaChanka: string;
+  quechuaCollao: string;
+}
+
+export interface AdminVideoItem {
+  id: string;
+  title: BilingualText;
+  description: BilingualText;
+  category: VideoStory['category'];
+  sourceType: 'file' | 'url' | 'animated';
+  mediaId?: string; // IndexedDB key for local offline uploaded video
+  mediaUrl?: string; // External URL or YouTube URL
+  durationSeconds: number;
+  thumbnailColor: string;
+  icon: string;
+  autoTranslate: boolean;
+  sourceLang: 'spanish' | 'quechua';
+  rawScript: string;
+  subtitles: SubtitleCue[];
+  scenes?: VideoScene[];
+  createdAt: number;
+}
+
+export interface AdminAudioItem {
+  id: string;
+  title: BilingualText;
+  description: BilingualText;
+  category: string;
+  sourceType: 'file' | 'recording' | 'tts';
+  mediaId?: string; // IndexedDB key for local offline uploaded/recorded audio
+  durationSeconds: number;
+  accentColor: string;
+  autoTranslate: boolean;
+  sourceLang: 'spanish' | 'quechua';
+  rawScript: string;
+  subtitles: SubtitleCue[];
+  createdAt: number;
+}
+
+export interface CustomSectionItem {
+  id: string;
+  title: BilingualText;
+  description: BilingualText;
+  icon: string;
+  audioId?: string;
+  videoId?: string;
+}
+
+export interface CustomSection {
+  id: string;
+  title: BilingualText;
+  description: BilingualText;
+  icon: string;
+  accentColor: string;
+  items: CustomSectionItem[];
+  createdAt: number;
+}
+
+export interface HiddenOptions {
+  mainTabs: string[];
+  games: string[];
+  videoIds: string[];
+  audioIds: string[];
+  pictogramIds: string[];
+  pictogramCategories: string[];
+  showOfflineBadge: boolean;
+  showCaaButton: boolean;
+  showAccessibilityBar: boolean;
+}
+

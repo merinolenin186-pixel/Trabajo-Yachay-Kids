@@ -7,13 +7,15 @@ import {
   Globe,
   Volume2,
   CheckCircle2,
-  ShieldCheck,
-  HeartHandshake,
-  Sparkles,
   BookCheck,
   Download,
   Smartphone,
+  ShieldCheck,
+  Lock,
+  LogOut,
+  Sliders,
 } from 'lucide-react';
+import { useAdmin } from '../../context/AdminContext';
 
 interface SettingsModuleProps {
   appLang: AppLanguage;
@@ -22,6 +24,7 @@ interface SettingsModuleProps {
   onSetDialect: (dialect: QuechuaDialect) => void;
   isMuted: boolean;
   onToggleMute: () => void;
+  onOpenAdminPanel?: () => void;
 }
 
 export const SettingsModule: React.FC<SettingsModuleProps> = ({
@@ -31,7 +34,9 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
   onSetDialect,
   isMuted,
   onToggleMute,
+  onOpenAdminPanel,
 }) => {
+  const { isAuthenticated, adminUsername, setIsLoginModalOpen, logout } = useAdmin();
   const [speechSpeed, setSpeechSpeed] = useState<'normal' | 'slow'>('slow');
   const [showInstallGuide, setShowInstallGuide] = useState(false);
   const [showApkModal, setShowApkModal] = useState(false);
@@ -289,6 +294,70 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
         isOpen={showApkModal}
         onClose={() => setShowApkModal(false)}
       />
+
+      {/* 5. ADMINISTRACIÓN Y PERSONALIZACIÓN */}
+      <div className="bg-slate-900 dark:bg-slate-900 p-6 rounded-3xl border-2 border-slate-700 text-white shadow-md space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center shadow-md shrink-0">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-extrabold font-['Fredoka']">
+                  Panel de Administrador
+                </h3>
+                {isAuthenticated && (
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    Sesión activa ({adminUsername})
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Cambia colores, edita descripciones, agrega secciones, videos o audios con subtítulos traducidos automáticamente y oculta opciones.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {isAuthenticated ? (
+              <>
+                <button
+                  onClick={() => {
+                    audioService.playPop();
+                    onOpenAdminPanel?.();
+                  }}
+                  className="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs shadow-md active:scale-95 transition flex items-center gap-2 cursor-pointer"
+                >
+                  <Sliders className="w-4 h-4" />
+                  <span>Abrir Panel Admin</span>
+                </button>
+                <button
+                  onClick={() => {
+                    audioService.playPop();
+                    logout();
+                  }}
+                  className="px-3.5 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Salir</span>
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => {
+                  audioService.playPop();
+                  setIsLoginModalOpen(true);
+                }}
+                className="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs shadow-md active:scale-95 transition flex items-center gap-2 cursor-pointer"
+              >
+                <Lock className="w-4 h-4" />
+                <span>Iniciar Sesión Admin</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Pedagogy note */}
       <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 space-y-2">

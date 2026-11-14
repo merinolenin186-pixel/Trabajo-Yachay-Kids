@@ -2,6 +2,7 @@ import React from 'react';
 import { AppLanguage, MainTab } from '../types';
 import { Gamepad2, Languages, Image as ImageIcon, Film, Settings } from 'lucide-react';
 import { audioService } from '../services/audioService';
+import { useAdmin } from '../context/AdminContext';
 
 interface BottomNavBarProps {
   currentTab: MainTab;
@@ -14,6 +15,8 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onSelectTab,
   appLang,
 }) => {
+  const { hiddenOptions } = useAdmin();
+
   const tabs = [
     {
       id: 'games' as MainTab,
@@ -30,8 +33,8 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
     {
       id: 'pictograms' as MainTab,
       icon: ImageIcon,
-      label: appLang === 'quechua' ? 'Siq\'i' : 'Pictogramas',
-      sub: appLang === 'quechua' ? 'Pictogramas' : 'Siq\'i',
+      label: appLang === 'quechua' ? "Siq'i" : 'Pictogramas',
+      sub: appLang === 'quechua' ? 'Pictogramas' : "Siq'i",
     },
     {
       id: 'videos' as MainTab,
@@ -47,13 +50,20 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
     },
   ];
 
+  const visibleTabs = tabs.filter(
+    tab => tab.id === 'settings' || !hiddenOptions.mainTabs.includes(tab.id)
+  );
+
   return (
     <nav
       className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]"
       aria-label="Navegación móvil inferior"
     >
-      <div className="grid grid-cols-5 items-center h-16 max-w-lg mx-auto px-1">
-        {tabs.map(tab => {
+      <div
+        className="grid items-center h-16 max-w-lg mx-auto px-1"
+        style={{ gridTemplateColumns: `repeat(${visibleTabs.length}, minmax(0, 1fr))` }}
+      >
+        {visibleTabs.map(tab => {
           const isActive = currentTab === tab.id;
           const Icon = tab.icon;
 

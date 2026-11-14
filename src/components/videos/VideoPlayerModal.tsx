@@ -32,7 +32,7 @@ interface VideoPlayerModalProps {
   dialect: QuechuaDialect;
 }
 
-type SubtitleMode = 'both' | 'quechua' | 'spanish';
+type SubtitleMode = 'auto' | 'both' | 'quechua' | 'spanish';
 
 export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   story,
@@ -41,22 +41,24 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   appLang,
   dialect,
 }) => {
-  if (!isOpen) return null;
-
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentSceneIdx, setCurrentSceneIdx] = useState(0);
-  const [subtitleMode, setSubtitleMode] = useState<SubtitleMode>('both');
+  const [subtitleMode, setSubtitleMode] = useState<SubtitleMode>('auto');
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentScene = story.scenes[currentSceneIdx] || story.scenes[0];
 
   // Play narration on scene change
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isOpen || !isPlaying) return;
 
-    // Speak Quechua narration for current scene
-    audioService.speakQuechua(currentScene.narrationQuechua, dialect);
+    // Speak narration in active app language
+    if (appLang === 'quechua') {
+      audioService.speakQuechua(currentScene.narrationQuechua, dialect);
+    } else {
+      audioService.speakSpanish(currentScene.narrationSpanish);
+    }
 
     // Schedule next scene after scene duration (adjusted for playback speed)
     const durationMs = (currentScene.duration * 1000) / playbackSpeed;
@@ -71,7 +73,9 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [currentSceneIdx, isPlaying, playbackSpeed, story, dialect]);
+  }, [isOpen, currentSceneIdx, isPlaying, playbackSpeed, story, dialect, appLang, currentScene]);
+
+  if (!isOpen) return null;
 
   const handleTogglePlay = () => {
     audioService.playPop();
@@ -104,9 +108,10 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   const toggleSubtitles = () => {
     audioService.playPop();
     setSubtitleMode(prev => {
+      if (prev === 'auto') return 'both';
       if (prev === 'both') return 'quechua';
       if (prev === 'quechua') return 'spanish';
-      return 'both';
+      return 'auto';
     });
   };
 
@@ -278,15 +283,35 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           {/* Subtitles Overlay */}
           <div className="absolute top-3 left-3 right-3 z-20">
             <div className="max-w-xl mx-auto p-3 rounded-2xl bg-black/75 backdrop-blur-md border border-white/20 text-center shadow-lg transition-all">
-              {(subtitleMode === 'both' || subtitleMode === 'quechua') && (
-                <p className="text-base sm:text-lg font-extrabold text-amber-300 font-['Fredoka']">
-                  «{currentScene.subtitlesQuechua}»
-                </p>
-              )}
-              {(subtitleMode === 'both' || subtitleMode === 'spanish') && (
-                <p className="text-xs sm:text-sm font-medium text-slate-200 mt-0.5">
-                  {currentScene.subtitlesSpanish}
-                </p>
+              {subtitleMode === 'auto' ? (
+                appLang === 'quechua' ? (
+                  <>
+                    <p className="text-base sm:text-lg font-extrabold text-amber-300 font-['Fredoka']">
+                      «{currentScene.subtitlesQuechua}»
+                    </p>
+                    <p className="text-xs text-slate-300 mt-0.5">{currentScene.subtitlesSpanish}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-base sm:text-lg font-extrabold text-white font-['Fredoka']">
+                      «{currentScene.subtitlesSpanish}»
+                    </p>
+                    <p className="text-xs text-amber-300 mt-0.5">{currentScene.subtitlesQuechua}</p>
+                  </>
+                )
+              ) : (
+                <>
+                  {(subtitleMode === 'both' || subtitleMode === 'quechua') && (
+                    <p className="text-base sm:text-lg font-extrabold text-amber-300 font-['Fredoka']">
+                      «{currentScene.subtitlesQuechua}»
+                    </p>
+                  )}
+                  {(subtitleMode === 'both' || subtitleMode === 'spanish') && (
+                    <p className="text-xs sm:text-sm font-medium text-slate-200 mt-0.5">
+                      {currentScene.subtitlesSpanish}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -351,7 +376,13 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
               >
                 <Subtitles className="w-4 h-4 text-amber-400" />
                 <span>
-                  {subtitleMode === 'both' ? 'Bilingüe' : subtitleMode === 'quechua' ? 'Quechua' : 'Español'}
+                  {subtitleMode === 'auto'
+                    ? `Auto (${appLang === 'quechua' ? 'Quechua' : 'Español'})`
+                    : subtitleMode === 'both'
+                    ? 'Bilingüe'
+                    : subtitleMode === 'quechua'
+                    ? 'Quechua'
+                    : 'Español'}
                 </span>
               </button>
 

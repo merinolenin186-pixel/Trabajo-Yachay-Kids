@@ -1,7 +1,8 @@
 import React from 'react';
 import { AppLanguage, MainTab, QuechuaDialect } from '../types';
-import { Volume2, VolumeX, Globe } from 'lucide-react';
+import { Volume2, VolumeX, Globe, ShieldCheck } from 'lucide-react';
 import { audioService } from '../services/audioService';
+import { useAdmin } from '../context/AdminContext';
 
 interface TopBarProps {
   currentTab: MainTab;
@@ -22,12 +23,26 @@ export const TopBar: React.FC<TopBarProps> = ({
   isMuted,
   onToggleMute,
 }) => {
+  const { customTexts, hiddenOptions, isAuthenticated } = useAdmin();
+
+  const navItems: { id: MainTab; quechua: string; spanish: string }[] = [
+    { id: 'games', quechua: 'Pukllaykuna (Juegos)', spanish: 'Juegos' },
+    { id: 'translator', quechua: 'Tijraq (Traductor)', spanish: 'Traductor' },
+    { id: 'pictograms', quechua: "Siq'ikuna (Pictogramas)", spanish: 'Pictogramas' },
+    { id: 'videos', quechua: 'Willakuy (Cuentos)', spanish: 'Videos y Cuentos' },
+    { id: 'settings', quechua: 'Allichay (Ajustes)', spanish: 'Ajustes' },
+  ];
+
+  const visibleNavItems = navItems.filter(
+    item => item.id === 'settings' || !hiddenOptions.mainTabs.includes(item.id)
+  );
+
   return (
-    <header className="sticky top-0 z-40 w-full bg-amber-500/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-amber-600/30 dark:border-slate-800 text-white shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-8">
-        {/* Zone 1: Brand Wordmark (Single line, text wordmark in display face) */}
+    <header className="yachay-topbar sticky top-0 z-40 w-full bg-amber-500/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-amber-600/30 dark:border-slate-800 text-white shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-6">
+        {/* Zone 1: Brand Wordmark */}
         <div
-          onClick={() => onSelectTab('games')}
+          onClick={() => onSelectTab(visibleNavItems[0]?.id || 'games')}
           className="flex items-center gap-2.5 cursor-pointer whitespace-nowrap shrink-0 group"
           role="button"
           tabIndex={0}
@@ -36,80 +51,66 @@ export const TopBar: React.FC<TopBarProps> = ({
             ☀️
           </span>
           <span className="text-xl md:text-2xl font-extrabold tracking-tight text-white drop-shadow-sm font-['Fredoka']">
-            Yachay Kids
+            {customTexts.appName || 'Yachay Kids'}
           </span>
-          <span className="hidden sm:inline text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-600/60 text-amber-100 border border-amber-400/40">
-            100% Offline
-          </span>
+          {hiddenOptions.showOfflineBadge && (
+            <span className="hidden sm:inline text-xs font-semibold px-2 py-0.5 rounded-full bg-black/20 text-white/95 border border-white/25">
+              100% Offline
+            </span>
+          )}
         </div>
 
-        {/* Zone 2: 4-5 Navigation links (Single-line, quiet hover underline) */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-          <button
-            onClick={() => onSelectTab('games')}
-            className={`whitespace-nowrap shrink-0 transition-colors py-1 ${
-              currentTab === 'games'
-                ? 'text-white font-bold border-b-2 border-white'
-                : 'text-amber-100 hover:text-white'
-            }`}
-          >
-            {appLang === 'quechua' ? 'Pukllaykuna (Juegos)' : 'Juegos'}
-          </button>
+        {/* Zone 2: Navigation links */}
+        <nav className="hidden md:flex items-center gap-5 text-sm font-medium">
+          {visibleNavItems.map(item => (
+            <button
+              key={item.id}
+              onClick={() => onSelectTab(item.id)}
+              className={`whitespace-nowrap shrink-0 transition-colors py-1 cursor-pointer ${
+                currentTab === item.id
+                  ? 'text-white font-bold border-b-2 border-white'
+                  : 'text-white/80 hover:text-white'
+              }`}
+            >
+              {appLang === 'quechua' ? item.quechua : item.spanish}
+            </button>
+          ))}
 
-          <button
-            onClick={() => onSelectTab('translator')}
-            className={`whitespace-nowrap shrink-0 transition-colors py-1 ${
-              currentTab === 'translator'
-                ? 'text-white font-bold border-b-2 border-white'
-                : 'text-amber-100 hover:text-white'
-            }`}
-          >
-            {appLang === 'quechua' ? 'Tijraq (Traductor)' : 'Traductor'}
-          </button>
-
-          <button
-            onClick={() => onSelectTab('pictograms')}
-            className={`whitespace-nowrap shrink-0 transition-colors py-1 ${
-              currentTab === 'pictograms'
-                ? 'text-white font-bold border-b-2 border-white'
-                : 'text-amber-100 hover:text-white'
-            }`}
-          >
-            {appLang === 'quechua' ? 'Siq\'ikuna (Pictogramas)' : 'Pictogramas'}
-          </button>
-
-          <button
-            onClick={() => onSelectTab('videos')}
-            className={`whitespace-nowrap shrink-0 transition-colors py-1 ${
-              currentTab === 'videos'
-                ? 'text-white font-bold border-b-2 border-white'
-                : 'text-amber-100 hover:text-white'
-            }`}
-          >
-            {appLang === 'quechua' ? 'Willakuy (Cuentos)' : 'Videos y Cuentos'}
-          </button>
-
-          <button
-            onClick={() => onSelectTab('settings')}
-            className={`whitespace-nowrap shrink-0 transition-colors py-1 ${
-              currentTab === 'settings'
-                ? 'text-white font-bold border-b-2 border-white'
-                : 'text-amber-100 hover:text-white'
-            }`}
-          >
-            {appLang === 'quechua' ? 'Allichay (Ajustes)' : 'Ajustes'}
-          </button>
+          {isAuthenticated && (
+            <button
+              onClick={() => onSelectTab('admin')}
+              className={`whitespace-nowrap shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-xl transition cursor-pointer ${
+                currentTab === 'admin'
+                  ? 'bg-white text-slate-900 font-bold shadow-sm'
+                  : 'bg-black/20 hover:bg-black/30 text-white font-bold'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Admin</span>
+            </button>
+          )}
         </nav>
 
-        {/* Zone 3: 1 Primary Action (Language Switcher & Audio Button) */}
+        {/* Zone 3: Language Switcher & Audio Button */}
         <div className="flex items-center gap-2 shrink-0">
+          {isAuthenticated && (
+            <button
+              onClick={() => onSelectTab('admin')}
+              aria-label="Panel Administrador"
+              className="md:hidden w-10 h-10 rounded-xl bg-black/25 hover:bg-black/35 flex items-center justify-center text-white transition active:scale-95 cursor-pointer"
+              title="Panel Administrador"
+            >
+              <ShieldCheck className="w-5 h-5" />
+            </button>
+          )}
+
           <button
             onClick={() => {
               audioService.playPop();
               onToggleMute();
             }}
             aria-label="Silenciar o activar sonido"
-            className="w-10 h-10 rounded-xl bg-amber-600/70 hover:bg-amber-600 flex items-center justify-center text-white transition active:scale-95"
+            className="w-10 h-10 rounded-xl bg-black/20 hover:bg-black/30 flex items-center justify-center text-white transition active:scale-95 cursor-pointer"
           >
             {isMuted ? <VolumeX className="w-5 h-5 text-red-200" /> : <Volume2 className="w-5 h-5" />}
           </button>
@@ -119,7 +120,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               audioService.playPop();
               onOpenLanguageModal();
             }}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white text-amber-900 font-bold text-xs sm:text-sm hover:bg-amber-50 active:scale-95 shadow transition whitespace-nowrap shrink-0"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white text-amber-900 font-bold text-xs sm:text-sm hover:bg-amber-50 active:scale-95 shadow transition whitespace-nowrap shrink-0 cursor-pointer"
           >
             <Globe className="w-4 h-4 text-amber-600" />
             <span>

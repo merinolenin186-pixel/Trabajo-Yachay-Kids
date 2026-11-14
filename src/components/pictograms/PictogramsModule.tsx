@@ -1,18 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppLanguage, QuechuaDialect, PictogramCategory, PictogramItem } from '../../types';
 import { PICTOGRAMS_DATA } from '../../data/pictogramsData';
 import { audioService } from '../../services/audioService';
 import {
   Volume2,
-  Sparkles,
   Maximize2,
   X,
   ChevronLeft,
   ChevronRight,
-  RotateCcw,
   MessageSquare,
 } from 'lucide-react';
 import { useAccessibility } from '../../context/AccessibilityContext';
+import { useAdmin } from '../../context/AdminContext';
 import {
   LlamaIllustration,
   CondorIllustration,
@@ -37,6 +36,7 @@ export const PictogramsModule: React.FC<PictogramsModuleProps> = ({
   const [activeCategory, setActiveCategory] = useState<PictogramCategory>('animales');
   const [fullscreenItem, setFullscreenItem] = useState<PictogramItem | null>(null);
   const { setIsCaaModalOpen } = useAccessibility();
+  const { hiddenOptions, customTexts } = useAdmin();
 
   const categories: { id: PictogramCategory; quechua: string; spanish: string; icon: string }[] = [
     { id: 'animales', quechua: 'Uywakuna', spanish: 'Animales', icon: '🦙' },
@@ -51,7 +51,24 @@ export const PictogramsModule: React.FC<PictogramsModuleProps> = ({
     { id: 'actividades', quechua: 'Ruranakuna', spanish: 'Actividades', icon: '🏃' },
   ];
 
-  const filteredItems = PICTOGRAMS_DATA.filter(item => item.category === activeCategory);
+  const visibleCategories = categories.filter(
+    cat => !hiddenOptions.pictogramCategories.includes(cat.id)
+  );
+
+  useEffect(() => {
+    if (
+      visibleCategories.length > 0 &&
+      !visibleCategories.some(cat => cat.id === activeCategory)
+    ) {
+      setActiveCategory(visibleCategories[0].id);
+    }
+  }, [hiddenOptions.pictogramCategories, activeCategory]);
+
+  const filteredItems = PICTOGRAMS_DATA.filter(
+    item =>
+      item.category === activeCategory &&
+      !hiddenOptions.pictogramIds.includes(item.id)
+  );
 
   const playQuechua = (item: PictogramItem) => {
     const word =
@@ -228,12 +245,21 @@ export const PictogramsModule: React.FC<PictogramsModuleProps> = ({
 
       {/* Category selector slider */}
       <div className="bg-white dark:bg-slate-800 p-4 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm">
-        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-3 px-1">
-          {appLang === 'quechua' ? 'Katiguryakuna (10 categorías):' : 'Categorías de pictogramas (10):'}
-        </span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3 px-1">
+          <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+            {appLang === 'quechua'
+              ? `Katiguryakuna (${visibleCategories.length} categorías):`
+              : `Categorías de pictogramas (${visibleCategories.length}):`}
+          </span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {appLang === 'quechua'
+              ? customTexts.pictogramsDescription.quechua
+              : customTexts.pictogramsDescription.spanish}
+          </span>
+        </div>
 
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-          {categories.map(cat => {
+          {visibleCategories.map(cat => {
             const isCur = activeCategory === cat.id;
             return (
               <button

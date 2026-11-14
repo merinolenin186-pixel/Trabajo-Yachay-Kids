@@ -7,6 +7,7 @@ import {
   AdminAudioItem,
   CustomSection,
   CustomSectionItem,
+  VideoStory,
 } from '../types';
 import { deleteMediaBlob } from '../services/mediaStorage';
 
@@ -148,6 +149,7 @@ const STORAGE_KEYS = {
   TEXTS: 'yachay_admin_texts',
   HIDDEN: 'yachay_admin_hidden',
   VIDEOS: 'yachay_admin_videos',
+  BUILTIN_VIDEOS: 'yachay_admin_builtin_videos',
   AUDIOS: 'yachay_admin_audios',
   SECTIONS: 'yachay_admin_sections',
 };
@@ -182,6 +184,10 @@ interface AdminContextType {
   addCustomVideo: (video: AdminVideoItem) => void;
   updateCustomVideo: (video: AdminVideoItem) => void;
   deleteCustomVideo: (id: string) => void;
+
+  editedBuiltinVideos: Record<string, VideoStory>;
+  updateBuiltinVideo: (story: VideoStory) => void;
+  resetBuiltinVideo: (id: string) => void;
 
   customAudios: AdminAudioItem[];
   addCustomAudio: (audio: AdminAudioItem) => void;
@@ -259,6 +265,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     readArrayStorage<AdminVideoItem>(STORAGE_KEYS.VIDEOS)
   );
 
+  const [editedBuiltinVideos, setEditedBuiltinVideos] = useState<Record<string, VideoStory>>(() =>
+    readStorage<Record<string, VideoStory>>(STORAGE_KEYS.BUILTIN_VIDEOS, {})
+  );
+
   const [customAudios, setCustomAudios] = useState<AdminAudioItem[]>(() =>
     readArrayStorage<AdminAudioItem>(STORAGE_KEYS.AUDIOS)
   );
@@ -316,6 +326,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       localStorage.setItem(STORAGE_KEYS.VIDEOS, JSON.stringify(customVideos));
     } catch {}
   }, [customVideos]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.BUILTIN_VIDEOS, JSON.stringify(editedBuiltinVideos));
+    } catch {}
+  }, [editedBuiltinVideos]);
 
   useEffect(() => {
     try {
@@ -425,6 +441,18 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setCustomVideos((prev) => prev.filter((v) => v.id !== id));
   };
 
+  const updateBuiltinVideo = (story: VideoStory) => {
+    setEditedBuiltinVideos((prev) => ({ ...prev, [story.id]: story }));
+  };
+
+  const resetBuiltinVideo = (id: string) => {
+    setEditedBuiltinVideos((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
   const addCustomAudio = (audio: AdminAudioItem) => {
     setCustomAudios((prev) => [audio, ...prev]);
   };
@@ -496,6 +524,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         addCustomVideo,
         updateCustomVideo,
         deleteCustomVideo,
+        editedBuiltinVideos,
+        updateBuiltinVideo,
+        resetBuiltinVideo,
         customAudios,
         addCustomAudio,
         updateCustomAudio,

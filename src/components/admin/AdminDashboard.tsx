@@ -5,8 +5,10 @@ import {
   parseAndAutoTranslateSubtitles,
   translateSingleTextAutomatically,
 } from '../../services/subtitleTranslatorService';
-import { saveMediaBlob, fileToBase64 } from '../../services/mediaStorage';
+import { saveMediaBlob, deleteMediaBlob, fileToBase64 } from '../../services/mediaStorage';
 import { audioService } from '../../services/audioService';
+import { CustomVideoPlayerModal } from '../videos/CustomVideoPlayerModal';
+import { AudioPlayerModal } from '../videos/AudioPlayerModal';
 import {
   AdminVideoItem,
   AdminAudioItem,
@@ -36,6 +38,8 @@ import {
   ArrowLeft,
   Sparkles,
   Play,
+  Pencil,
+  X,
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -47,6 +51,7 @@ interface AdminDashboardProps {
 type AdminTab = 'theme' | 'texts' | 'sections' | 'videos' | 'audios' | 'security';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
+  appLang,
   dialect,
   onExitAdmin,
 }) => {
@@ -67,9 +72,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     restoreAllHiddenOptions,
     customVideos,
     addCustomVideo,
+    updateCustomVideo,
     deleteCustomVideo,
+    editedBuiltinVideos,
+    updateBuiltinVideo,
+    resetBuiltinVideo,
     customAudios,
     addCustomAudio,
+    updateCustomAudio,
     deleteCustomAudio,
     customSections,
     addCustomSection,
@@ -120,9 +130,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     );
   };
 
-  // --- CUSTOM VIDEO FORM STATE ---
+  // --- CUSTOM VIDEO FORM STATE (CREATE & EDIT) ---
+  const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
+  const [editingVideoMediaId, setEditingVideoMediaId] = useState<string | undefined>(undefined);
   const [vTitle, setVTitle] = useState('');
+  const [vTitleQu, setVTitleQu] = useState('');
   const [vDesc, setVDesc] = useState('');
+  const [vDescQu, setVDescQu] = useState('');
   const [vCategory, setVCategory] = useState<VideoStory['category']>('cuentos');
   const [vSourceType, setVSourceType] = useState<'file' | 'url' | 'animated'>('file');
   const [vUrl, setVUrl] = useState('');
@@ -133,7 +147,54 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [vScript, setVScript] = useState('');
   const [vAutoTranslate, setVAutoTranslate] = useState(true);
   const [vPreviewCues, setVPreviewCues] = useState<SubtitleCue[]>([]);
+  const [vCuesEditedManually, setVCuesEditedManually] = useState(false);
   const [vBusy, setVBusy] = useState(false);
+  const [previewingVideo, setPreviewingVideo] = useState<AdminVideoItem | null>(null);
+
+  // Built-in story editor state
+  const [editingBuiltinStory, setEditingBuiltinStory] = useState<VideoStory | null>(null);
+
+  const resetVideoForm = () => {
+    setEditingVideoId(null);
+    setEditingVideoMediaId(undefined);
+    setVTitle('');
+    setVTitleQu('');
+    setVDesc('');
+    setVDescQu('');
+    setVCategory('cuentos');
+    setVSourceType('file');
+    setVUrl('');
+    setVFile(null);
+    setVDuration(25);
+    setVColor('#7c3aed');
+    setVSourceLang('spanish');
+    setVScript('');
+    setVAutoTranslate(true);
+    setVPreviewCues([]);
+    setVCuesEditedManually(false);
+  };
+
+  const handleStartEditVideo = (vid: AdminVideoItem) => {
+    audioService.playPop();
+    setEditingVideoId(vid.id);
+    setEditingVideoMediaId(vid.mediaId);
+    setVTitle(vid.title.spanish);
+    setVTitleQu(vid.title.quechua);
+    setVDesc(vid.description.spanish);
+    setVDescQu(vid.description.quechua);
+    setVCategory(vid.category);
+    setVSourceType(vid.sourceType);
+    setVUrl(vid.mediaUrl || '');
+    setVFile(null);
+    setVDuration(vid.durationSeconds);
+    setVColor(vid.thumbnailColor || '#7c3aed');
+    setVSourceLang(vid.sourceLang || 'spanish');
+    setVScript(vid.rawScript || '');
+    setVAutoTranslate(vid.autoTranslate);
+    setVPreviewCues(vid.subtitles || []);
+    setVCuesEditedManually(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -185,6 +246,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           }));
           setVPreviewCues(formattedCues);
           setVScript(formattedCues.map((c) => c.spanish || c.quechuaChanka).join('\n'));
+          setVCuesEditedManually(true);
           audioService.playSuccessSound();
           notify('Audio/video transcrito y subtítulos traducidos automáticamente.');
         } else {
@@ -212,6 +274,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       vDuration
     );
     setVPreviewCues(cues);
+    setVCuesEditedManually(true);
     setVBusy(false);
     audioService.playPop();
     notify(
@@ -223,11 +286,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleSaveVideo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!vTitle.trim()) {
+    const titleInput = vSourceLang === 'quechua' ? (vTitleQu || vTitle) : vTitle;
+    if (!titleInput.trim()) {
       notify('Ingresa un título para el video.');
       return;
     }
-    if (vSourceType === 'file' && !vFile) {
+    if (vSourceType === 'file' && !vFile && !editingVideoMediaId) {
       notify('Selecciona un archivo de video o cambia el tipo de origen a URL o Cuento.');
       return;
     }
@@ -238,33 +302,58 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     setVBusy(true);
     try {
-      const id = `vid-custom-${Date.now()}`;
-      let mediaId: string | undefined;
+      const id = editingVideoId || `vid-custom-${Date.now()}`;
+      let mediaId: string | undefined = vSourceType === 'file' ? editingVideoMediaId : undefined;
       if (vSourceType === 'file' && vFile) {
-        mediaId = `blob-${id}`;
+        if (editingVideoMediaId) {
+          await deleteMediaBlob(editingVideoMediaId);
+        }
+        mediaId = `blob-${id}-${Date.now()}`;
         await saveMediaBlob(mediaId, vFile);
+      } else if (vSourceType !== 'file' && editingVideoMediaId) {
+        await deleteMediaBlob(editingVideoMediaId);
       }
 
-      const [titleTrans, descTrans] = await Promise.all([
-        translateSingleTextAutomatically(vTitle, vSourceLang),
-        translateSingleTextAutomatically(vDesc || vTitle, vSourceLang),
-      ]);
+      let finalSpanishTitle = vTitle.trim();
+      let finalQuechuaTitle = vTitleQu.trim();
+      if (!finalSpanishTitle || !finalQuechuaTitle) {
+        const titleTrans = await translateSingleTextAutomatically(titleInput, vSourceLang);
+        finalSpanishTitle = finalSpanishTitle || titleTrans.spanish;
+        finalQuechuaTitle =
+          finalQuechuaTitle ||
+          (dialect === 'collao' ? titleTrans.quechuaCollao : titleTrans.quechuaChanka);
+      }
+
+      const descInput = vSourceLang === 'quechua' ? (vDescQu || vDesc || titleInput) : (vDesc || titleInput);
+      let finalSpanishDesc = vDesc.trim();
+      let finalQuechuaDesc = vDescQu.trim();
+      if (!finalSpanishDesc || !finalQuechuaDesc) {
+        const descTrans = await translateSingleTextAutomatically(descInput, vSourceLang);
+        finalSpanishDesc = finalSpanishDesc || descTrans.spanish;
+        finalQuechuaDesc =
+          finalQuechuaDesc ||
+          (dialect === 'collao' ? descTrans.quechuaCollao : descTrans.quechuaChanka);
+      }
 
       let cues = vPreviewCues;
-      if (vScript.trim() && (cues.length === 0 || vAutoTranslate)) {
+      if (vScript.trim() && (!vCuesEditedManually || cues.length === 0) && vAutoTranslate) {
         const parsed = await parseAndAutoTranslateSubtitles(vScript, vSourceLang, vDuration);
         cues = parsed.cues;
       }
 
-      const newVideo: AdminVideoItem = {
+      const existingVideo = editingVideoId
+        ? customVideos.find((v) => v.id === editingVideoId)
+        : undefined;
+
+      const videoPayload: AdminVideoItem = {
         id,
         title: {
-          spanish: titleTrans.spanish,
-          quechua: dialect === 'collao' ? titleTrans.quechuaCollao : titleTrans.quechuaChanka,
+          spanish: finalSpanishTitle,
+          quechua: finalQuechuaTitle,
         },
         description: {
-          spanish: descTrans.spanish,
-          quechua: dialect === 'collao' ? descTrans.quechuaCollao : descTrans.quechuaChanka,
+          spanish: finalSpanishDesc,
+          quechua: finalQuechuaDesc,
         },
         category: vCategory,
         sourceType: vSourceType,
@@ -277,27 +366,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         sourceLang: vSourceLang,
         rawScript: vScript.trim(),
         subtitles: cues,
-        createdAt: Date.now(),
+        createdAt: existingVideo?.createdAt || Date.now(),
       };
 
-      addCustomVideo(newVideo);
+      if (editingVideoId) {
+        updateCustomVideo(videoPayload);
+        notify('Video actualizado correctamente.');
+      } else {
+        addCustomVideo(videoPayload);
+        notify('Video guardado con subtítulos auto-traducidos.');
+      }
       audioService.playSuccessSound();
-      notify('Video guardado con subtítulos auto-traducidos.');
-
-      setVTitle('');
-      setVDesc('');
-      setVUrl('');
-      setVFile(null);
-      setVScript('');
-      setVPreviewCues([]);
+      resetVideoForm();
     } finally {
       setVBusy(false);
     }
   };
 
-  // --- CUSTOM AUDIO FORM STATE & MICROPHONE RECORDER ---
+  // --- CUSTOM AUDIO FORM STATE & MICROPHONE RECORDER (CREATE & EDIT) ---
+  const [editingAudioId, setEditingAudioId] = useState<string | null>(null);
+  const [editingAudioMediaId, setEditingAudioMediaId] = useState<string | undefined>(undefined);
   const [aTitle, setATitle] = useState('');
+  const [aTitleQu, setATitleQu] = useState('');
   const [aDesc, setADesc] = useState('');
+  const [aDescQu, setADescQu] = useState('');
   const [aCategory, setACategory] = useState('Cuentos y Voces');
   const [aSourceType, setASourceType] = useState<'file' | 'recording' | 'tts'>('recording');
   const [aFile, setAFile] = useState<File | null>(null);
@@ -309,10 +401,54 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [aScript, setAScript] = useState('');
   const [aAutoTranslate, setAAutoTranslate] = useState(true);
   const [aPreviewCues, setAPreviewCues] = useState<SubtitleCue[]>([]);
+  const [aCuesEditedManually, setACuesEditedManually] = useState(false);
   const [aBusy, setABusy] = useState(false);
+  const [previewingAudio, setPreviewingAudio] = useState<AdminAudioItem | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordStartRef = useRef<number>(0);
+
+  const resetAudioForm = () => {
+    setEditingAudioId(null);
+    setEditingAudioMediaId(undefined);
+    setATitle('');
+    setATitleQu('');
+    setADesc('');
+    setADescQu('');
+    setACategory('Cuentos y Voces');
+    setASourceType('recording');
+    setAFile(null);
+    setARecordedBlob(null);
+    setADuration(15);
+    setAColor('#0d9488');
+    setASourceLang('spanish');
+    setAScript('');
+    setAAutoTranslate(true);
+    setAPreviewCues([]);
+    setACuesEditedManually(false);
+  };
+
+  const handleStartEditAudio = (aud: AdminAudioItem) => {
+    audioService.playPop();
+    setEditingAudioId(aud.id);
+    setEditingAudioMediaId(aud.mediaId);
+    setATitle(aud.title.spanish);
+    setATitleQu(aud.title.quechua);
+    setADesc(aud.description.spanish);
+    setADescQu(aud.description.quechua);
+    setACategory(aud.category || 'Cuentos y Voces');
+    setASourceType(aud.sourceType);
+    setAFile(null);
+    setARecordedBlob(null);
+    setADuration(aud.durationSeconds);
+    setAColor(aud.accentColor || '#0d9488');
+    setASourceLang(aud.sourceLang || 'spanish');
+    setAScript(aud.rawScript || '');
+    setAAutoTranslate(aud.autoTranslate);
+    setAPreviewCues(aud.subtitles || []);
+    setACuesEditedManually(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const startRecording = async () => {
     try {
@@ -382,6 +518,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       aDuration
     );
     setAPreviewCues(cues);
+    setACuesEditedManually(true);
     setABusy(false);
     audioService.playPop();
     notify(
@@ -393,15 +530,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleSaveAudio = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!aTitle.trim()) {
+    const titleInput = aSourceLang === 'quechua' ? (aTitleQu || aTitle) : aTitle;
+    if (!titleInput.trim()) {
       notify('Ingresa un título para el audio.');
       return;
     }
-    if (aSourceType === 'file' && !aFile) {
+    if (aSourceType === 'file' && !aFile && !editingAudioMediaId) {
       notify('Selecciona un archivo de audio (.mp3, .wav, .ogg).');
       return;
     }
-    if (aSourceType === 'recording' && !aRecordedBlob) {
+    if (aSourceType === 'recording' && !aRecordedBlob && !editingAudioMediaId) {
       notify('Graba un audio con el micrófono o cambia a Texto a Voz / Subir archivo.');
       return;
     }
@@ -412,38 +550,62 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     setABusy(true);
     try {
-      const id = `aud-custom-${Date.now()}`;
-      let mediaId: string | undefined;
+      const id = editingAudioId || `aud-custom-${Date.now()}`;
+      let mediaId: string | undefined = aSourceType !== 'tts' ? editingAudioMediaId : undefined;
 
       if (aSourceType === 'file' && aFile) {
-        mediaId = `blob-${id}`;
+        if (editingAudioMediaId) await deleteMediaBlob(editingAudioMediaId);
+        mediaId = `blob-${id}-${Date.now()}`;
         await saveMediaBlob(mediaId, aFile);
       } else if (aSourceType === 'recording' && aRecordedBlob) {
-        mediaId = `blob-${id}`;
+        if (editingAudioMediaId) await deleteMediaBlob(editingAudioMediaId);
+        mediaId = `blob-${id}-${Date.now()}`;
         await saveMediaBlob(mediaId, aRecordedBlob);
+      } else if (aSourceType === 'tts' && editingAudioMediaId) {
+        await deleteMediaBlob(editingAudioMediaId);
       }
 
-      const [titleTrans, descTrans] = await Promise.all([
-        translateSingleTextAutomatically(aTitle, aSourceLang),
-        translateSingleTextAutomatically(aDesc || aTitle, aSourceLang),
-      ]);
+      let finalSpanishTitle = aTitle.trim();
+      let finalQuechuaTitle = aTitleQu.trim();
+      if (!finalSpanishTitle || !finalQuechuaTitle) {
+        const titleTrans = await translateSingleTextAutomatically(titleInput, aSourceLang);
+        finalSpanishTitle = finalSpanishTitle || titleTrans.spanish;
+        finalQuechuaTitle =
+          finalQuechuaTitle ||
+          (dialect === 'collao' ? titleTrans.quechuaCollao : titleTrans.quechuaChanka);
+      }
+
+      const descInput = aSourceLang === 'quechua' ? (aDescQu || aDesc || titleInput) : (aDesc || titleInput);
+      let finalSpanishDesc = aDesc.trim();
+      let finalQuechuaDesc = aDescQu.trim();
+      if (!finalSpanishDesc || !finalQuechuaDesc) {
+        const descTrans = await translateSingleTextAutomatically(descInput, aSourceLang);
+        finalSpanishDesc = finalSpanishDesc || descTrans.spanish;
+        finalQuechuaDesc =
+          finalQuechuaDesc ||
+          (dialect === 'collao' ? descTrans.quechuaCollao : descTrans.quechuaChanka);
+      }
 
       let cues = aPreviewCues;
-      const scriptToUse = aScript.trim() || aDesc.trim() || aTitle.trim();
-      if (scriptToUse && (cues.length === 0 || aAutoTranslate)) {
+      const scriptToUse = aScript.trim() || finalSpanishDesc || finalSpanishTitle;
+      if (scriptToUse && (!aCuesEditedManually || cues.length === 0) && aAutoTranslate) {
         const parsed = await parseAndAutoTranslateSubtitles(scriptToUse, aSourceLang, aDuration);
         cues = parsed.cues;
       }
 
-      const newAudio: AdminAudioItem = {
+      const existingAudio = editingAudioId
+        ? customAudios.find((a) => a.id === editingAudioId)
+        : undefined;
+
+      const audioPayload: AdminAudioItem = {
         id,
         title: {
-          spanish: titleTrans.spanish,
-          quechua: dialect === 'collao' ? titleTrans.quechuaCollao : titleTrans.quechuaChanka,
+          spanish: finalSpanishTitle,
+          quechua: finalQuechuaTitle,
         },
         description: {
-          spanish: descTrans.spanish,
-          quechua: dialect === 'collao' ? descTrans.quechuaCollao : descTrans.quechuaChanka,
+          spanish: finalSpanishDesc,
+          quechua: finalQuechuaDesc,
         },
         category: aCategory.trim() || 'Educativo',
         sourceType: aSourceType,
@@ -454,19 +616,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         sourceLang: aSourceLang,
         rawScript: scriptToUse,
         subtitles: cues,
-        createdAt: Date.now(),
+        createdAt: existingAudio?.createdAt || Date.now(),
       };
 
-      addCustomAudio(newAudio);
+      if (editingAudioId) {
+        updateCustomAudio(audioPayload);
+        notify('Audio actualizado correctamente.');
+      } else {
+        addCustomAudio(audioPayload);
+        notify('Audio guardado con subtítulos traducidos automáticamente.');
+      }
       audioService.playSuccessSound();
-      notify('Audio guardado con subtítulos traducidos automáticamente.');
-
-      setATitle('');
-      setADesc('');
-      setAFile(null);
-      setARecordedBlob(null);
-      setAScript('');
-      setAPreviewCues([]);
+      resetAudioForm();
     } finally {
       setABusy(false);
     }
@@ -1409,13 +1570,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {activeTab === 'videos' && (
         <div className="space-y-6">
           <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-5">
-            <div>
-              <h3 className="text-lg font-extrabold text-slate-900 dark:text-white font-['Fredoka']">
-                Agregar Nuevo Video con Subtítulos Auto-Traducidos
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Sube un video desde tu dispositivo (offline), pega una URL o crea un cuento. Los subtítulos se traducen automáticamente según el idioma activo en la aplicación.
-              </p>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white font-['Fredoka']">
+                  {editingVideoId
+                    ? 'Editar Video y Subtítulos'
+                    : 'Agregar Nuevo Video con Subtítulos Auto-Traducidos'}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Sube un video desde tu dispositivo (offline), pega una URL o crea un cuento. Los subtítulos se traducen automáticamente según el idioma activo en la aplicación.
+                </p>
+              </div>
+              {editingVideoId && (
+                <button
+                  type="button"
+                  onClick={resetVideoForm}
+                  className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Cancelar Edición</span>
+                </button>
+              )}
             </div>
 
             <form onSubmit={handleSaveVideo} className="space-y-4">
@@ -1447,7 +1622,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <label className="flex items-center gap-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer">
                     <Upload className="w-5 h-5 text-amber-600" />
                     <span>
-                      {vFile ? `Archivo: ${vFile.name}` : 'Seleccionar video del celular o PC'}
+                      {vFile
+                        ? `Archivo nuevo: ${vFile.name}`
+                        : editingVideoMediaId
+                        ? 'Video guardado en dispositivo (haz clic para reemplazar archivo)'
+                        : 'Seleccionar video del celular o PC'}
                     </span>
                     <input
                       type="file"
@@ -1489,7 +1668,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Título del Video
+                    Título en Español {editingVideoId ? '' : '(si escribes aquí, se auto-traduce al Quechua)'}
                   </label>
                   <input
                     type="text"
@@ -1500,48 +1679,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Categoría
-                    </label>
-                    <select
-                      value={vCategory}
-                      onChange={(e) => setVCategory(e.target.value as VideoStory['category'])}
-                      className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs"
-                    >
-                      <option value="cuentos">Cuentos</option>
-                      <option value="numeros">Números</option>
-                      <option value="animales">Animales</option>
-                      <option value="colores">Colores</option>
-                      <option value="alimentos">Alimentos</option>
-                      <option value="saludos">Saludos</option>
-                      <option value="familia">Familia</option>
-                      <option value="naturaleza">Naturaleza</option>
-                      <option value="cultura">Cultura</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Idioma original
-                    </label>
-                    <select
-                      value={vSourceLang}
-                      onChange={(e) => setVSourceLang(e.target.value as 'spanish' | 'quechua')}
-                      className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs"
-                    >
-                      <option value="spanish">Español</option>
-                      <option value="quechua">Quechua</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Título en Quechua (opcional al crear, editable siempre)
+                  </label>
+                  <input
+                    type="text"
+                    value={vTitleQu}
+                    onChange={(e) => setVTitleQu(e.target.value)}
+                    placeholder="Se completa automáticamente si se deja vacío"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm"
+                  />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="sm:col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Descripción breve
+                    Descripción en Español
                   </label>
                   <input
                     type="text"
@@ -1552,30 +1707,79 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   />
                 </div>
 
-                <div className="flex items-end gap-3">
-                  <div className="flex-1">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Duración (seg)
-                    </label>
-                    <input
-                      type="number"
-                      min={5}
-                      value={vDuration}
-                      onChange={(e) => setVDuration(Number(e.target.value) || 15)}
-                      className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Color
-                    </label>
-                    <input
-                      type="color"
-                      value={vColor}
-                      onChange={(e) => setVColor(e.target.value)}
-                      className="w-10 h-10 rounded-xl border-0 cursor-pointer"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Descripción en Quechua (opcional al crear)
+                  </label>
+                  <input
+                    type="text"
+                    value={vDescQu}
+                    onChange={(e) => setVDescQu(e.target.value)}
+                    placeholder="Se traduce automáticamente si se deja vacío"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Categoría
+                  </label>
+                  <select
+                    value={vCategory}
+                    onChange={(e) => setVCategory(e.target.value as VideoStory['category'])}
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs"
+                  >
+                    <option value="cuentos">Cuentos</option>
+                    <option value="numeros">Números</option>
+                    <option value="animales">Animales</option>
+                    <option value="colores">Colores</option>
+                    <option value="alimentos">Alimentos</option>
+                    <option value="saludos">Saludos</option>
+                    <option value="familia">Familia</option>
+                    <option value="naturaleza">Naturaleza</option>
+                    <option value="cultura">Cultura</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Idioma original
+                  </label>
+                  <select
+                    value={vSourceLang}
+                    onChange={(e) => setVSourceLang(e.target.value as 'spanish' | 'quechua')}
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs"
+                  >
+                    <option value="spanish">Español</option>
+                    <option value="quechua">Quechua</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Duración (seg)
+                  </label>
+                  <input
+                    type="number"
+                    min={5}
+                    value={vDuration}
+                    onChange={(e) => setVDuration(Number(e.target.value) || 15)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Color Tarjeta
+                  </label>
+                  <input
+                    type="color"
+                    value={vColor}
+                    onChange={(e) => setVColor(e.target.value)}
+                    className="w-full h-10 rounded-xl border-0 cursor-pointer"
+                  />
                 </div>
               </div>
 
@@ -1599,7 +1803,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <textarea
                   rows={4}
                   value={vScript}
-                  onChange={(e) => setVScript(e.target.value)}
+                  onChange={(e) => {
+                    setVScript(e.target.value);
+                    setVCuesEditedManually(false);
+                  }}
                   placeholder={`00:00 Hola amiguitos, hoy aprenderemos los saludos.\n00:06 Agua pura de la montaña.\n00:12 Muchas gracias y hasta mañana.`}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm"
                 />
@@ -1618,53 +1825,98 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 {vPreviewCues.length > 0 && (
                   <div className="space-y-2 pt-2">
-                    <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 block">
-                      Vista previa de subtítulos auto-traducidos ({vPreviewCues.length} líneas):
-                    </span>
-                    <div className="max-h-44 overflow-y-auto space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                        Subtítulos editables ({vPreviewCues.length} líneas):
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const lastEnd = vPreviewCues[vPreviewCues.length - 1]?.endTime || 0;
+                          setVPreviewCues([
+                            ...vPreviewCues,
+                            {
+                              id: `cue-${Date.now()}`,
+                              startTime: lastEnd,
+                              endTime: lastEnd + 4,
+                              spanish: '',
+                              quechuaChanka: '',
+                              quechuaCollao: '',
+                            },
+                          ]);
+                          setVCuesEditedManually(true);
+                        }}
+                        className="text-[11px] font-bold text-amber-700 dark:text-amber-300 hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Agregar línea</span>
+                      </button>
+                    </div>
+                    <div className="max-h-56 overflow-y-auto space-y-2">
                       {vPreviewCues.map((cue, idx) => (
                         <div
                           key={cue.id}
-                          className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] grid grid-cols-1 sm:grid-cols-3 gap-2"
+                          className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] space-y-2"
                         >
-                          <div>
-                            <strong className="text-slate-500">[{cue.startTime}s - {cue.endTime}s] Español:</strong>
-                            <input
-                              type="text"
-                              value={cue.spanish}
-                              onChange={(e) => {
-                                const next = [...vPreviewCues];
-                                next[idx] = { ...cue, spanish: e.target.value };
-                                setVPreviewCues(next);
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold text-slate-500">
+                              Línea {idx + 1} · {cue.startTime}s - {cue.endTime}s
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setVPreviewCues(vPreviewCues.filter((c) => c.id !== cue.id));
+                                setVCuesEditedManually(true);
                               }}
-                              className="w-full mt-0.5 px-2 py-1 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
-                            />
+                              className="text-rose-600 hover:text-rose-700 font-bold flex items-center gap-0.5 cursor-pointer"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              <span>Quitar</span>
+                            </button>
                           </div>
-                          <div>
-                            <strong className="text-amber-700 dark:text-amber-400">Quechua Chanka:</strong>
-                            <input
-                              type="text"
-                              value={cue.quechuaChanka}
-                              onChange={(e) => {
-                                const next = [...vPreviewCues];
-                                next[idx] = { ...cue, quechuaChanka: e.target.value };
-                                setVPreviewCues(next);
-                              }}
-                              className="w-full mt-0.5 px-2 py-1 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
-                            />
-                          </div>
-                          <div>
-                            <strong className="text-teal-700 dark:text-teal-400">Quechua Collao:</strong>
-                            <input
-                              type="text"
-                              value={cue.quechuaCollao}
-                              onChange={(e) => {
-                                const next = [...vPreviewCues];
-                                next[idx] = { ...cue, quechuaCollao: e.target.value };
-                                setVPreviewCues(next);
-                              }}
-                              className="w-full mt-0.5 px-2 py-1 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
-                            />
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div>
+                              <strong className="text-slate-500">Español:</strong>
+                              <input
+                                type="text"
+                                value={cue.spanish}
+                                onChange={(e) => {
+                                  const next = [...vPreviewCues];
+                                  next[idx] = { ...cue, spanish: e.target.value };
+                                  setVPreviewCues(next);
+                                  setVCuesEditedManually(true);
+                                }}
+                                className="w-full mt-0.5 px-2 py-1 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                              />
+                            </div>
+                            <div>
+                              <strong className="text-amber-700 dark:text-amber-400">Quechua Chanka:</strong>
+                              <input
+                                type="text"
+                                value={cue.quechuaChanka}
+                                onChange={(e) => {
+                                  const next = [...vPreviewCues];
+                                  next[idx] = { ...cue, quechuaChanka: e.target.value };
+                                  setVPreviewCues(next);
+                                  setVCuesEditedManually(true);
+                                }}
+                                className="w-full mt-0.5 px-2 py-1 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                              />
+                            </div>
+                            <div>
+                              <strong className="text-teal-700 dark:text-teal-400">Quechua Collao:</strong>
+                              <input
+                                type="text"
+                                value={cue.quechuaCollao}
+                                onChange={(e) => {
+                                  const next = [...vPreviewCues];
+                                  next[idx] = { ...cue, quechuaCollao: e.target.value };
+                                  setVPreviewCues(next);
+                                  setVCuesEditedManually(true);
+                                }}
+                                className="w-full mt-0.5 px-2 py-1 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                              />
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -1673,14 +1925,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 )}
               </div>
 
-              <button
-                type="submit"
-                disabled={vBusy}
-                className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md active:scale-95 transition flex items-center gap-2 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>{vBusy ? 'Guardando y traduciendo...' : 'Guardar Video'}</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="submit"
+                  disabled={vBusy}
+                  className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md active:scale-95 transition flex items-center gap-2 cursor-pointer"
+                >
+                  {editingVideoId ? <CheckCircle2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  <span>
+                    {vBusy
+                      ? 'Guardando y traduciendo...'
+                      : editingVideoId
+                      ? 'Guardar Cambios del Video'
+                      : 'Guardar Video'}
+                  </span>
+                </button>
+                {editingVideoId && (
+                  <button
+                    type="button"
+                    onClick={resetVideoForm}
+                    className="px-5 py-3 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-800 dark:text-slate-100 font-bold text-sm cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                )}
+              </div>
             </form>
           </div>
 
@@ -1690,68 +1959,293 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               Videos Agregados y Predeterminados
             </h3>
 
-            {customVideos.length > 0 && (
+            {customVideos.length > 0 ? (
               <div className="space-y-2">
-                <span className="text-xs font-bold text-slate-500 block">Tus Videos Agregados ({customVideos.length})</span>
+                <span className="text-xs font-bold text-slate-500 block">
+                  Tus Videos Agregados ({customVideos.length})
+                </span>
                 {customVideos.map((v) => (
                   <div
                     key={v.id}
-                    className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
                   >
-                    <div>
-                      <span className="font-bold text-sm text-slate-900 dark:text-white block">
+                    <div className="min-w-0">
+                      <span className="font-bold text-sm text-slate-900 dark:text-white block truncate">
                         {v.title.spanish} · {v.title.quechua}
                       </span>
                       <span className="text-xs text-slate-500">
-                        {v.category} · {v.durationSeconds}s · {v.subtitles.length} subtítulos traducidos
+                        {v.category} · {v.sourceType === 'file' ? 'Archivo local' : v.sourceType === 'url' ? 'Enlace URL' : 'Cuento animado'} · {v.durationSeconds}s · {v.subtitles.length} subtítulos
                       </span>
                     </div>
-                    <button
-                      onClick={() => {
-                        deleteCustomVideo(v.id);
-                        notify('Video eliminado.');
-                      }}
-                      className="p-2 rounded-xl bg-rose-100 text-rose-700 hover:bg-rose-200 cursor-pointer"
-                      title="Eliminar video"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewingVideo(v)}
+                        className="px-3 py-2 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 hover:bg-amber-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                        title="Reproducir y verificar subtítulos"
+                      >
+                        <Play className="w-3.5 h-3.5" />
+                        <span>Ver</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleStartEditVideo(v)}
+                        className="px-3 py-2 rounded-xl bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 hover:bg-sky-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                        title="Editar video y subtítulos"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        <span>Editar</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (editingVideoId === v.id) resetVideoForm();
+                          deleteCustomVideo(v.id);
+                          notify('Video eliminado.');
+                        }}
+                        className="px-3 py-2 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 hover:bg-rose-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                        title="Eliminar video"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Eliminar</span>
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
+            ) : (
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Aún no has agregado videos propios. Usa el formulario superior para agregar uno.
+              </p>
             )}
 
-            <div className="space-y-2 pt-2">
+            <div className="space-y-2 pt-3 border-t border-slate-200 dark:border-slate-700">
               <span className="text-xs font-bold text-slate-500 block">
-                Videos Predeterminados (puedes ocultar los que no te gusten)
+                Videos Predeterminados (puedes editar títulos/subtítulos u ocultar los que no te gusten)
               </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {VIDEO_STORIES_DATA.map((story) => {
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {VIDEO_STORIES_DATA.map((baseStory) => {
+                  const story = editedBuiltinVideos[baseStory.id] || baseStory;
+                  const isEdited = Boolean(editedBuiltinVideos[baseStory.id]);
                   const hidden = hiddenOptions.videoIds.includes(story.id);
                   return (
                     <div
                       key={story.id}
-                      className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs"
+                      className="flex items-center justify-between gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs"
                     >
-                      <span className={`font-bold truncate pr-2 ${hidden ? 'line-through text-slate-400' : ''}`}>
-                        {story.title.spanish}
-                      </span>
-                      <button
-                        onClick={() => toggleHiddenItem('videoIds', story.id)}
-                        className={`px-2.5 py-1 rounded-lg font-bold shrink-0 cursor-pointer ${
-                          hidden
-                            ? 'bg-slate-200 text-slate-700'
-                            : 'bg-emerald-100 text-emerald-800'
-                        }`}
-                      >
-                        {hidden ? 'Eliminado' : 'Visible'}
-                      </button>
+                      <div className="min-w-0">
+                        <span className={`font-bold block truncate ${hidden ? 'line-through text-slate-400' : ''}`}>
+                          {story.title.spanish}
+                        </span>
+                        <span className="text-[11px] text-slate-500 block truncate">
+                          {story.title.quechua} {isEdited ? '· Editado' : ''}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setEditingBuiltinStory(JSON.parse(JSON.stringify(story)))}
+                          className="p-1.5 rounded-lg bg-sky-100 text-sky-800 hover:bg-sky-200 cursor-pointer"
+                          title="Editar cuento predeterminado"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        {isEdited && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              resetBuiltinVideo(story.id);
+                              notify('Video predeterminado restaurado a su versión original.');
+                            }}
+                            className="p-1.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 cursor-pointer"
+                            title="Restaurar original"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => toggleHiddenItem('videoIds', story.id)}
+                          className={`px-2.5 py-1 rounded-lg font-bold cursor-pointer ${
+                            hidden
+                              ? 'bg-slate-200 text-slate-700'
+                              : 'bg-emerald-100 text-emerald-800'
+                          }`}
+                        >
+                          {hidden ? 'Oculto' : 'Visible'}
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
               </div>
             </div>
           </div>
+
+          {/* Built-in Story Inline Editor Modal */}
+          {editingBuiltinStory && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full max-h-[88vh] overflow-hidden border-2 border-amber-400 shadow-2xl flex flex-col">
+                <div className="p-5 bg-slate-950 text-white flex items-center justify-between">
+                  <h4 className="font-extrabold text-base sm:text-lg font-['Fredoka']">
+                    Editar Video Predeterminado: {editingBuiltinStory.title.spanish}
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => setEditingBuiltinStory(null)}
+                    className="p-1.5 rounded-full bg-slate-800 hover:bg-slate-700 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="p-5 overflow-y-auto space-y-4 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-bold text-slate-600 dark:text-slate-300 block mb-1">
+                        Título (Español)
+                      </label>
+                      <input
+                        type="text"
+                        value={editingBuiltinStory.title.spanish}
+                        onChange={(e) =>
+                          setEditingBuiltinStory({
+                            ...editingBuiltinStory,
+                            title: { ...editingBuiltinStory.title, spanish: e.target.value },
+                          })
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-600 dark:text-slate-300 block mb-1">
+                        Título (Quechua)
+                      </label>
+                      <input
+                        type="text"
+                        value={editingBuiltinStory.title.quechua}
+                        onChange={(e) =>
+                          setEditingBuiltinStory({
+                            ...editingBuiltinStory,
+                            title: { ...editingBuiltinStory.title, quechua: e.target.value },
+                          })
+                        }
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <span className="font-extrabold text-slate-800 dark:text-slate-100 block">
+                      Escenas y Subtítulos ({editingBuiltinStory.scenes.length})
+                    </span>
+                    {editingBuiltinStory.scenes.map((scene, sIdx) => (
+                      <div
+                        key={sIdx}
+                        className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-amber-700 dark:text-amber-400">
+                            Escena {sIdx + 1} ({scene.duration}s)
+                          </span>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const tr = await translateSingleTextAutomatically(
+                                scene.subtitlesSpanish,
+                                'spanish'
+                              );
+                              const nextScenes = [...editingBuiltinStory.scenes];
+                              nextScenes[sIdx] = {
+                                ...scene,
+                                subtitlesQuechua:
+                                  dialect === 'collao' ? tr.quechuaCollao : tr.quechuaChanka,
+                                narrationQuechua:
+                                  dialect === 'collao' ? tr.quechuaCollao : tr.quechuaChanka,
+                              };
+                              setEditingBuiltinStory({
+                                ...editingBuiltinStory,
+                                scenes: nextScenes,
+                              });
+                              notify(`Escena ${sIdx + 1} traducida automáticamente al Quechua.`);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-amber-500 text-white font-bold flex items-center gap-1 cursor-pointer"
+                          >
+                            <Languages className="w-3 h-3" />
+                            <span>Auto-traducir a Quechua</span>
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[11px] font-bold text-slate-500">Subtítulo Español</label>
+                            <textarea
+                              rows={2}
+                              value={scene.subtitlesSpanish}
+                              onChange={(e) => {
+                                const nextScenes = [...editingBuiltinStory.scenes];
+                                nextScenes[sIdx] = {
+                                  ...scene,
+                                  subtitlesSpanish: e.target.value,
+                                  narrationSpanish: e.target.value,
+                                };
+                                setEditingBuiltinStory({
+                                  ...editingBuiltinStory,
+                                  scenes: nextScenes,
+                                });
+                              }}
+                              className="w-full mt-0.5 px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-slate-500">Subtítulo Quechua</label>
+                            <textarea
+                              rows={2}
+                              value={scene.subtitlesQuechua}
+                              onChange={(e) => {
+                                const nextScenes = [...editingBuiltinStory.scenes];
+                                nextScenes[sIdx] = {
+                                  ...scene,
+                                  subtitlesQuechua: e.target.value,
+                                  narrationQuechua: e.target.value,
+                                };
+                                setEditingBuiltinStory({
+                                  ...editingBuiltinStory,
+                                  scenes: nextScenes,
+                                });
+                              }}
+                              className="w-full mt-0.5 px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingBuiltinStory(null)}
+                    className="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-bold cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateBuiltinVideo(editingBuiltinStory);
+                      setEditingBuiltinStory(null);
+                      audioService.playSuccessSound();
+                      notify('Cambios del video guardados.');
+                    }}
+                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer"
+                  >
+                    Guardar Cambios
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1759,13 +2253,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {activeTab === 'audios' && (
         <div className="space-y-6">
           <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-5">
-            <div>
-              <h3 className="text-lg font-extrabold text-slate-900 dark:text-white font-['Fredoka']">
-                Agregar Audio Educativo con Subtítulos Automáticos
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Graba tu voz, sube un archivo de audio o escribe texto para voz sintetizada. Los subtítulos se traducen al idioma configurado.
-              </p>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white font-['Fredoka']">
+                  {editingAudioId
+                    ? 'Editar Audio Educativo y Subtítulos'
+                    : 'Agregar Audio Educativo con Subtítulos Automáticos'}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Graba tu voz, sube un archivo de audio o escribe texto para voz sintetizada. Los subtítulos se traducen al idioma configurado.
+                </p>
+              </div>
+              {editingAudioId && (
+                <button
+                  type="button"
+                  onClick={resetAudioForm}
+                  className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Cancelar Edición</span>
+                </button>
+              )}
             </div>
 
             <form onSubmit={handleSaveAudio} className="space-y-4">
@@ -1798,7 +2306,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     {isRecording
                       ? 'Grabando audio ahora... habla claro frente al micrófono.'
                       : aRecordedBlob
-                      ? `Grabación lista (${aDuration}s).`
+                      ? `Nueva grabación lista (${aDuration}s).`
+                      : editingAudioMediaId
+                      ? `Grabación guardada (${aDuration}s). Graba de nuevo solo si deseas reemplazarla.`
                       : 'Presiona el botón para grabar tu voz directamente.'}
                   </div>
                   {!isRecording ? (
@@ -1808,7 +2318,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                     >
                       <Mic className="w-4 h-4" />
-                      <span>Iniciar Grabación</span>
+                      <span>{editingAudioMediaId ? 'Regrabar Audio' : 'Iniciar Grabación'}</span>
                     </button>
                   ) : (
                     <button
@@ -1828,7 +2338,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <label className="flex items-center gap-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer">
                     <Upload className="w-5 h-5 text-amber-600" />
                     <span>
-                      {aFile ? `Archivo: ${aFile.name}` : 'Seleccionar audio (.mp3, .wav, .ogg, .m4a)'}
+                      {aFile
+                        ? `Archivo nuevo: ${aFile.name}`
+                        : editingAudioMediaId
+                        ? 'Audio guardado en dispositivo (haz clic para reemplazar archivo)'
+                        : 'Seleccionar audio (.mp3, .wav, .ogg, .m4a)'}
                     </span>
                     <input
                       type="file"
@@ -1843,7 +2357,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Título del Audio
+                    Título en Español
                   </label>
                   <input
                     type="text"
@@ -1854,38 +2368,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Categoría
-                    </label>
-                    <input
-                      type="text"
-                      value={aCategory}
-                      onChange={(e) => setACategory(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Idioma original
-                    </label>
-                    <select
-                      value={aSourceLang}
-                      onChange={(e) => setASourceLang(e.target.value as 'spanish' | 'quechua')}
-                      className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs"
-                    >
-                      <option value="spanish">Español</option>
-                      <option value="quechua">Quechua</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Título en Quechua (opcional al crear, editable siempre)
+                  </label>
+                  <input
+                    type="text"
+                    value={aTitleQu}
+                    onChange={(e) => setATitleQu(e.target.value)}
+                    placeholder="Se completa automáticamente si se deja vacío"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm"
+                  />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                <div className="sm:col-span-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Descripción
+                    Descripción en Español
                   </label>
                   <input
                     type="text"
@@ -1893,6 +2393,58 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     onChange={(e) => setADesc(e.target.value)}
                     placeholder="¿Qué escucharán los niños en este audio?"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Descripción en Quechua (opcional al crear)
+                  </label>
+                  <input
+                    type="text"
+                    value={aDescQu}
+                    onChange={(e) => setADescQu(e.target.value)}
+                    placeholder="Se traduce automáticamente si se deja vacío"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Categoría
+                  </label>
+                  <input
+                    type="text"
+                    value={aCategory}
+                    onChange={(e) => setACategory(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Idioma original
+                  </label>
+                  <select
+                    value={aSourceLang}
+                    onChange={(e) => setASourceLang(e.target.value as 'spanish' | 'quechua')}
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs"
+                  >
+                    <option value="spanish">Español</option>
+                    <option value="quechua">Quechua</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Duración (seg)
+                  </label>
+                  <input
+                    type="number"
+                    min={3}
+                    value={aDuration}
+                    onChange={(e) => setADuration(Number(e.target.value) || 10)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm"
                   />
                 </div>
                 <div>
@@ -1927,7 +2479,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <textarea
                   rows={3}
                   value={aScript}
-                  onChange={(e) => setAScript(e.target.value)}
+                  onChange={(e) => {
+                    setAScript(e.target.value);
+                    setACuesEditedManually(false);
+                  }}
                   placeholder="Escribe las frases del audio línea por línea..."
                   className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm"
                 />
@@ -1946,83 +2501,195 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 {aPreviewCues.length > 0 && (
                   <div className="space-y-2 pt-2">
-                    {aPreviewCues.map((cue) => (
-                      <div
-                        key={cue.id}
-                        className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] grid grid-cols-1 sm:grid-cols-3 gap-2"
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                        Subtítulos editables ({aPreviewCues.length} líneas):
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const lastEnd = aPreviewCues[aPreviewCues.length - 1]?.endTime || 0;
+                          setAPreviewCues([
+                            ...aPreviewCues,
+                            {
+                              id: `acue-${Date.now()}`,
+                              startTime: lastEnd,
+                              endTime: lastEnd + 4,
+                              spanish: '',
+                              quechuaChanka: '',
+                              quechuaCollao: '',
+                            },
+                          ]);
+                          setACuesEditedManually(true);
+                        }}
+                        className="text-[11px] font-bold text-amber-700 dark:text-amber-300 hover:underline flex items-center gap-1 cursor-pointer"
                       >
-                        <div>
-                          <strong className="text-slate-500">Español:</strong>
-                          <p>{cue.spanish}</p>
+                        <Plus className="w-3 h-3" />
+                        <span>Agregar línea</span>
+                      </button>
+                    </div>
+                    <div className="max-h-56 overflow-y-auto space-y-2">
+                      {aPreviewCues.map((cue, idx) => (
+                        <div
+                          key={cue.id}
+                          className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] space-y-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-500">
+                              Línea {idx + 1} · {cue.startTime}s - {cue.endTime}s
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAPreviewCues(aPreviewCues.filter((c) => c.id !== cue.id));
+                                setACuesEditedManually(true);
+                              }}
+                              className="text-rose-600 hover:text-rose-700 font-bold flex items-center gap-0.5 cursor-pointer"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              <span>Quitar</span>
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div>
+                              <strong className="text-slate-500">Español:</strong>
+                              <input
+                                type="text"
+                                value={cue.spanish}
+                                onChange={(e) => {
+                                  const next = [...aPreviewCues];
+                                  next[idx] = { ...cue, spanish: e.target.value };
+                                  setAPreviewCues(next);
+                                  setACuesEditedManually(true);
+                                }}
+                                className="w-full mt-0.5 px-2 py-1 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                              />
+                            </div>
+                            <div>
+                              <strong className="text-amber-700 dark:text-amber-400">Chanka:</strong>
+                              <input
+                                type="text"
+                                value={cue.quechuaChanka}
+                                onChange={(e) => {
+                                  const next = [...aPreviewCues];
+                                  next[idx] = { ...cue, quechuaChanka: e.target.value };
+                                  setAPreviewCues(next);
+                                  setACuesEditedManually(true);
+                                }}
+                                className="w-full mt-0.5 px-2 py-1 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                              />
+                            </div>
+                            <div>
+                              <strong className="text-teal-700 dark:text-teal-400">Collao:</strong>
+                              <input
+                                type="text"
+                                value={cue.quechuaCollao}
+                                onChange={(e) => {
+                                  const next = [...aPreviewCues];
+                                  next[idx] = { ...cue, quechuaCollao: e.target.value };
+                                  setAPreviewCues(next);
+                                  setACuesEditedManually(true);
+                                }}
+                                className="w-full mt-0.5 px-2 py-1 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                              />
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <strong className="text-amber-700 dark:text-amber-400">Chanka:</strong>
-                          <p>{cue.quechuaChanka}</p>
-                        </div>
-                        <div>
-                          <strong className="text-teal-700 dark:text-teal-400">Collao:</strong>
-                          <p>{cue.quechuaCollao}</p>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
 
-              <button
-                type="submit"
-                disabled={aBusy}
-                className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md active:scale-95 transition flex items-center gap-2 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>{aBusy ? 'Guardando...' : 'Guardar Audio'}</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="submit"
+                  disabled={aBusy}
+                  className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md active:scale-95 transition flex items-center gap-2 cursor-pointer"
+                >
+                  {editingAudioId ? <CheckCircle2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  <span>
+                    {aBusy
+                      ? 'Guardando...'
+                      : editingAudioId
+                      ? 'Guardar Cambios del Audio'
+                      : 'Guardar Audio'}
+                  </span>
+                </button>
+                {editingAudioId && (
+                  <button
+                    type="button"
+                    onClick={resetAudioForm}
+                    className="px-5 py-3 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-800 dark:text-slate-100 font-bold text-sm cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                )}
+              </div>
             </form>
           </div>
 
-          {customAudios.length > 0 && (
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-white font-['Fredoka']">
-                Audios Agregados ({customAudios.length})
-              </h3>
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
+            <h3 className="text-base font-extrabold text-slate-900 dark:text-white font-['Fredoka']">
+              Audios Agregados ({customAudios.length})
+            </h3>
+            {customAudios.length === 0 ? (
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Aún no has agregado audios educativos. Graba o sube un audio arriba para comenzar.
+              </p>
+            ) : (
               <div className="space-y-2">
                 {customAudios.map((aud) => (
                   <div
                     key={aud.id}
-                    className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
                   >
-                    <div>
-                      <span className="font-bold text-sm text-slate-900 dark:text-white block">
+                    <div className="min-w-0">
+                      <span className="font-bold text-sm text-slate-900 dark:text-white block truncate">
                         {aud.title.spanish} · {aud.title.quechua}
                       </span>
                       <span className="text-xs text-slate-500">
-                        {aud.category} · {aud.durationSeconds}s · {aud.subtitles.length} subtítulos
+                        {aud.category} · {aud.sourceType === 'recording' ? 'Grabación' : aud.sourceType === 'file' ? 'Archivo' : 'Texto a Voz'} · {aud.durationSeconds}s · {aud.subtitles.length} subtítulos
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <button
-                        onClick={() => audioService.speakSpanish(aud.rawScript)}
-                        className="p-2 rounded-xl bg-amber-100 text-amber-800 hover:bg-amber-200 cursor-pointer"
-                        title="Probar audio"
+                        type="button"
+                        onClick={() => setPreviewingAudio(aud)}
+                        className="px-3 py-2 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 hover:bg-amber-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                        title="Reproducir audio con subtítulos"
                       >
-                        <Play className="w-4 h-4" />
+                        <Play className="w-3.5 h-3.5" />
+                        <span>Escuchar</span>
                       </button>
                       <button
+                        type="button"
+                        onClick={() => handleStartEditAudio(aud)}
+                        className="px-3 py-2 rounded-xl bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 hover:bg-sky-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                        title="Editar audio y subtítulos"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        <span>Editar</span>
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => {
+                          if (editingAudioId === aud.id) resetAudioForm();
                           deleteCustomAudio(aud.id);
                           notify('Audio eliminado.');
                         }}
-                        className="p-2 rounded-xl bg-rose-100 text-rose-700 hover:bg-rose-200 cursor-pointer"
+                        className="px-3 py-2 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 hover:bg-rose-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
                         title="Eliminar audio"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Eliminar</span>
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
@@ -2072,6 +2739,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
           </form>
         </div>
+      )}
+
+      {/* Preview Modals inside Admin Dashboard */}
+      {previewingVideo && (
+        <CustomVideoPlayerModal
+          video={previewingVideo}
+          isOpen={true}
+          onClose={() => setPreviewingVideo(null)}
+          appLang={appLang}
+          dialect={dialect}
+        />
+      )}
+
+      {previewingAudio && (
+        <AudioPlayerModal
+          audio={previewingAudio}
+          isOpen={true}
+          onClose={() => setPreviewingAudio(null)}
+          appLang={appLang}
+          dialect={dialect}
+        />
       )}
     </div>
   );

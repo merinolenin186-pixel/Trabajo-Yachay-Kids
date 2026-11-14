@@ -31,7 +31,7 @@ export const VideosModule: React.FC<VideosModuleProps> = ({
   appLang,
   dialect,
 }) => {
-  const { customVideos, customAudios, hiddenOptions, customTexts } = useAdmin();
+  const { customVideos, customAudios, editedBuiltinVideos, hiddenOptions, customTexts } = useAdmin();
   const [mediaView, setMediaView] = useState<'videos' | 'audios'>('videos');
   const [selectedStory, setSelectedStory] = useState<VideoStory | null>(null);
   const [selectedCustomVideo, setSelectedCustomVideo] = useState<AdminVideoItem | null>(null);
@@ -53,7 +53,7 @@ export const VideosModule: React.FC<VideosModuleProps> = ({
 
   const visibleBuiltinStories = VIDEO_STORIES_DATA.filter(
     (s) => !hiddenOptions.videoIds.includes(s.id)
-  );
+  ).map((s) => editedBuiltinVideos[s.id] || s);
 
   const filteredBuiltin = visibleBuiltinStories.filter((story) =>
     activeCategory === 'todos' ? true : story.category === activeCategory

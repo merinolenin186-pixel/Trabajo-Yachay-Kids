@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AppLanguage, QuechuaDialect, FoodItem } from '../../types';
 import { FOODS_DATA } from '../../data/gamesData';
 import { audioService } from '../../services/audioService';
+import { useUserProfile } from '../../context/UserProfileContext';
 import confetti from 'canvas-confetti';
 import { ChevronLeft, Volume2, CheckCircle2, RotateCcw, ShoppingBag, Sparkles } from 'lucide-react';
 import {
@@ -20,6 +21,8 @@ export const FoodsGame: React.FC<FoodsGameProps> = ({
   dialect,
   onBackToHub,
 }) => {
+  const { profile, awardStar } = useUserProfile();
+  const { showPhonetics, showDialectNotes, cardScale } = profile.config;
   const [activeTab, setActiveTab] = useState<'learn' | 'basket'>('learn');
   const [selectedFood, setSelectedFood] = useState<FoodItem>(FOODS_DATA[0]);
 
@@ -69,6 +72,7 @@ export const FoodsGame: React.FC<FoodsGameProps> = ({
       audioService.speakQuechua(`Allinmi! ${food.name.quechua}`, dialect);
       setBasketItems(b => [...b, food.name.quechua]);
       setBasketFeedback('correct');
+      awardStar(`foods-${food.id}`);
 
       confetti({
         particleCount: 50,
@@ -157,8 +161,17 @@ export const FoodsGame: React.FC<FoodsGameProps> = ({
               </div>
 
               <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 mt-1">
-                Español: {selectedFood.name.spanish} · Fonética: [{selectedFood.name.phonetic}]
+                Español: {selectedFood.name.spanish}
+                {showPhonetics && selectedFood.name.phonetic && (
+                  <> · Fonética: [{selectedFood.name.phonetic}]</>
+                )}
               </p>
+              {showDialectNotes && selectedFood.name.dialectNotes && (
+                <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mt-1">
+                  Chanka: <strong>{selectedFood.name.dialectNotes.chanka || selectedFood.name.quechua}</strong> · Collao:{' '}
+                  <strong>{selectedFood.name.dialectNotes.collao || selectedFood.name.quechua}</strong>
+                </p>
+              )}
 
               {/* Cultural and Nutrition Notes */}
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg w-full text-left">
@@ -193,7 +206,11 @@ export const FoodsGame: React.FC<FoodsGameProps> = ({
               {appLang === 'quechua' ? 'Mikhunata akllay:' : 'Selecciona un alimento para conocerlo:'}
             </span>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div
+              className={`grid gap-3 ${
+                cardScale === 'large' ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'
+              }`}
+            >
               {FOODS_DATA.map(food => {
                 const isCur = food.id === selectedFood.id;
                 return (

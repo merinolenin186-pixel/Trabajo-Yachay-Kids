@@ -21,6 +21,9 @@ import { SettingsModule } from './components/settings/SettingsModule';
 import { ApkDownloadModal } from './components/ApkDownloadModal';
 import { AccessibilityProvider, useAccessibility } from './context/AccessibilityContext';
 import { AdminProvider, useAdmin } from './context/AdminContext';
+import { UserProfileProvider, useUserProfile } from './context/UserProfileContext';
+import { WelcomeOnboardingScreen } from './components/WelcomeOnboardingScreen';
+import { ChildProfileModal } from './components/ChildProfileModal';
 import { AdminLoginModal } from './components/admin/AdminLoginModal';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AccessibilityBar } from './components/accessibility/AccessibilityBar';
@@ -38,11 +41,13 @@ function AppContent() {
   const [currentTab, setCurrentTab] = useState<MainTab>('games');
   const [currentGameSubTab, setCurrentGameSubTab] = useState<GameSubTab>('hub');
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isApkModalOpen, setIsApkModalOpen] = useState(false);
   const [isFirstLaunch, setIsFirstLaunch] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
 
   const { isCaaModalOpen, setIsCaaModalOpen, screenReaderVoice, speakAccessible } = useAccessibility();
+  const { isOnboardingOpen } = useUserProfile();
   const {
     isAuthenticated,
     isLoginModalOpen,
@@ -51,23 +56,16 @@ function AppContent() {
     customTexts,
   } = useAdmin();
 
-  // Initialize from storage or show first-time welcome modal
+  // Initialize saved language & dialect from storage
   useEffect(() => {
     try {
       const savedLang = localStorage.getItem(STORAGE_LANG_KEY) as AppLanguage | null;
       const savedDialect = localStorage.getItem(STORAGE_DIALECT_KEY) as QuechuaDialect | null;
-      const welcomed = localStorage.getItem(STORAGE_WELCOMED_KEY);
 
       if (savedLang) setAppLang(savedLang);
       if (savedDialect) setDialect(savedDialect);
-
-      if (!welcomed) {
-        setIsFirstLaunch(true);
-        setIsLanguageModalOpen(true);
-      }
     } catch {
-      setIsFirstLaunch(true);
-      setIsLanguageModalOpen(true);
+      // Ignore storage errors
     }
   }, []);
 
@@ -135,6 +133,17 @@ function AppContent() {
     return order.find(t => t === 'settings' || !hiddenOptions.mainTabs.includes(t)) || 'settings';
   };
 
+  // Pre-entry Welcome Gate: Ask child's name, interactive avatar photo, language & user level
+  if (isOnboardingOpen) {
+    return (
+      <WelcomeOnboardingScreen
+        currentLang={appLang}
+        currentDialect={dialect}
+        onSelectLanguage={handleSelectLanguage}
+      />
+    );
+  }
+
   return (
     <div className="yachay-app-shell min-h-screen bg-amber-50/50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-['Fredoka'] antialiased selection:bg-amber-500 selection:text-white pb-20 md:pb-10">
       {/* Universal Accessibility Toolbar */}
@@ -152,6 +161,7 @@ function AppContent() {
         appLang={appLang}
         dialect={dialect}
         onOpenLanguageModal={() => setIsLanguageModalOpen(true)}
+        onOpenProfileModal={() => setIsProfileModalOpen(true)}
         isMuted={isMuted}
         onToggleMute={handleToggleMute}
       />
@@ -335,6 +345,15 @@ function AppContent() {
         dialect={dialect}
       />
 
+      {/* Child Profile & Level Quick-Switcher Modal */}
+      <ChildProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        appLang={appLang}
+        dialect={dialect}
+        onOpenSettings={() => handleSelectTab('settings')}
+      />
+
       {/* Administrator Login Modal */}
       <AdminLoginModal
         isOpen={isLoginModalOpen}
@@ -348,9 +367,11 @@ function AppContent() {
 export default function App() {
   return (
     <AdminProvider>
-      <AccessibilityProvider>
-        <AppContent />
-      </AccessibilityProvider>
+      <UserProfileProvider>
+        <AccessibilityProvider>
+          <AppContent />
+        </AccessibilityProvider>
+      </UserProfileProvider>
     </AdminProvider>
   );
 }

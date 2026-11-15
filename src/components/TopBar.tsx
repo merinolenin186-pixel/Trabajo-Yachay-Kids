@@ -3,6 +3,7 @@ import { AppLanguage, MainTab, QuechuaDialect } from '../types';
 import { Volume2, VolumeX, Globe, ShieldCheck } from 'lucide-react';
 import { audioService } from '../services/audioService';
 import { useAdmin } from '../context/AdminContext';
+import { useUserProfile } from '../context/UserProfileContext';
 
 interface TopBarProps {
   currentTab: MainTab;
@@ -10,6 +11,7 @@ interface TopBarProps {
   appLang: AppLanguage;
   dialect: QuechuaDialect;
   onOpenLanguageModal: () => void;
+  onOpenProfileModal: () => void;
   isMuted: boolean;
   onToggleMute: () => void;
 }
@@ -20,10 +22,12 @@ export const TopBar: React.FC<TopBarProps> = ({
   appLang,
   dialect,
   onOpenLanguageModal,
+  onOpenProfileModal,
   isMuted,
   onToggleMute,
 }) => {
   const { customTexts, hiddenOptions, isAuthenticated } = useAdmin();
+  const { profile } = useUserProfile();
 
   const navItems: { id: MainTab; quechua: string; spanish: string }[] = [
     { id: 'games', quechua: 'Pukllaykuna (Juegos)', spanish: 'Juegos' },
@@ -113,6 +117,23 @@ export const TopBar: React.FC<TopBarProps> = ({
             className="w-10 h-10 rounded-xl bg-black/20 hover:bg-black/30 flex items-center justify-center text-white transition active:scale-95 cursor-pointer"
           >
             {isMuted ? <VolumeX className="w-5 h-5 text-red-200" /> : <Volume2 className="w-5 h-5" />}
+          </button>
+
+          <button
+            onClick={() => {
+              audioService.playPop();
+              onOpenProfileModal();
+            }}
+            className="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-xl bg-black/20 hover:bg-black/30 text-white font-bold text-xs transition active:scale-95 whitespace-nowrap shrink-0 cursor-pointer"
+            title="Ver perfil y nivel del niño"
+          >
+            <img
+              src={profile.avatarImage}
+              alt={profile.name}
+              referrerPolicy="no-referrer"
+              className="w-7 h-7 rounded-lg object-cover border border-white/60 shrink-0"
+            />
+            <span className="max-w-[84px] truncate">{profile.name}</span>
           </button>
 
           <button

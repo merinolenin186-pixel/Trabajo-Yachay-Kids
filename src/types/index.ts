@@ -251,3 +251,39 @@ export interface HiddenOptions {
   showAccessibilityBar: boolean;
 }
 
+export type UserLevel = 'inicial' | 'explorador' | 'amauta';
+
+export interface AvatarOption {
+  id: string;
+  name: string;
+  meaningQuechua: string;
+  meaningSpanish: string;
+  greetingQuechua: string;
+  greetingSpanish: string;
+  image: string;
+  accentColor: string;
+  badgeText: string;
+}
+
+export interface LevelConfig {
+  autoSpeakOnTap: boolean;
+  showPhonetics: boolean;
+  showDialectNotes: boolean;
+  showVisualHints: boolean;
+  speechSpeed: 'slow' | 'normal';
+  cardScale: 'large' | 'standard' | 'compact';
+  defaultMemoryDifficulty: 'easy' | 'medium' | 'hard';
+}
+
+export interface ChildProfile {
+  name: string;
+  avatarId: string;
+  avatarImage: string;
+  level: UserLevel;
+  stars: number;
+  completedActivities: string[];
+  onboarded: boolean;
+  config: LevelConfig;
+}
+
+

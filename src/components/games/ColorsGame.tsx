@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AppLanguage, QuechuaDialect, ColorItem } from '../../types';
 import { COLORS_DATA } from '../../data/gamesData';
 import { audioService } from '../../services/audioService';
+import { useUserProfile } from '../../context/UserProfileContext';
 import confetti from 'canvas-confetti';
 import { ChevronLeft, Volume2, CheckCircle2, RotateCcw, Sparkles } from 'lucide-react';
 
@@ -16,6 +17,8 @@ export const ColorsGame: React.FC<ColorsGameProps> = ({
   dialect,
   onBackToHub,
 }) => {
+  const { profile, awardStar } = useUserProfile();
+  const { showPhonetics, showDialectNotes, cardScale } = profile.config;
   const [activeTab, setActiveTab] = useState<'explore' | 'quiz'>('explore');
   const [selectedColor, setSelectedColor] = useState<ColorItem>(COLORS_DATA[0]);
 
@@ -51,6 +54,7 @@ export const ColorsGame: React.FC<ColorsGameProps> = ({
       audioService.playSuccessSound();
       setFeedback('correct');
       setQuizScore(s => s + 1);
+      awardStar(`colors-${targetColor.id}`);
       confetti({
         particleCount: 50,
         spread: 70,
@@ -144,8 +148,17 @@ export const ColorsGame: React.FC<ColorsGameProps> = ({
                   </h3>
                 </div>
                 <p className="text-base font-bold text-slate-600 dark:text-slate-300">
-                  Español: {selectedColor.name.spanish} · Fonética: [{selectedColor.name.phonetic}]
+                  Español: {selectedColor.name.spanish}
+                  {showPhonetics && selectedColor.name.phonetic && (
+                    <> · Fonética: [{selectedColor.name.phonetic}]</>
+                  )}
                 </p>
+                {showDialectNotes && selectedColor.name.dialectNotes && (
+                  <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                    Chanka: <strong>{selectedColor.name.dialectNotes.chanka || selectedColor.name.quechua}</strong> · Collao:{' '}
+                    <strong>{selectedColor.name.dialectNotes.collao || selectedColor.name.quechua}</strong>
+                  </p>
+                )}
               </div>
 
               {/* Real World Andean Association */}
@@ -166,7 +179,11 @@ export const ColorsGame: React.FC<ColorsGameProps> = ({
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-3 text-left">
                 {appLang === 'quechua' ? 'Llimpita akllay:' : 'Toca un color para aprender:'}
               </span>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div
+                className={`grid gap-3 ${
+                  cardScale === 'large' ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'
+                }`}
+              >
                 {COLORS_DATA.map(col => {
                   const isCur = col.id === selectedColor.id;
                   return (

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AppLanguage, QuechuaDialect, NumberItem } from '../../types';
 import { NUMBERS_DATA } from '../../data/gamesData';
 import { audioService } from '../../services/audioService';
+import { useUserProfile } from '../../context/UserProfileContext';
 import confetti from 'canvas-confetti';
 import { Volume2, ChevronLeft, ChevronRight, Sparkles, CheckCircle2, RotateCcw, Award } from 'lucide-react';
 import {
@@ -23,6 +24,8 @@ export const NumbersGame: React.FC<NumbersGameProps> = ({
   dialect,
   onBackToHub,
 }) => {
+  const { profile, awardStar } = useUserProfile();
+  const { showPhonetics, showDialectNotes, showVisualHints, autoSpeakOnTap, cardScale } = profile.config;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'learn' | 'quiz'>('learn');
   const [countedObjects, setCountedObjects] = useState<number[]>([]);
@@ -50,7 +53,9 @@ export const NumbersGame: React.FC<NumbersGameProps> = ({
     const nextIdx = (currentIndex + 1) % NUMBERS_DATA.length;
     setCurrentIndex(nextIdx);
     setCountedObjects([]);
-    playPronunciation(NUMBERS_DATA[nextIdx]);
+    if (autoSpeakOnTap) {
+      playPronunciation(NUMBERS_DATA[nextIdx]);
+    }
   };
 
   const handlePrevNumber = () => {
@@ -58,7 +63,9 @@ export const NumbersGame: React.FC<NumbersGameProps> = ({
     const prevIdx = (currentIndex - 1 + NUMBERS_DATA.length) % NUMBERS_DATA.length;
     setCurrentIndex(prevIdx);
     setCountedObjects([]);
-    playPronunciation(NUMBERS_DATA[prevIdx]);
+    if (autoSpeakOnTap) {
+      playPronunciation(NUMBERS_DATA[prevIdx]);
+    }
   };
 
   const handleTapObject = (idx: number) => {
@@ -147,6 +154,7 @@ export const NumbersGame: React.FC<NumbersGameProps> = ({
       audioService.playSuccessSound();
       setQuizFeedback('correct');
       setQuizScore(s => s + 1);
+      awardStar(`numbers-${quizTarget.number}`);
       confetti({
         particleCount: 50,
         spread: 70,
@@ -253,8 +261,21 @@ export const NumbersGame: React.FC<NumbersGameProps> = ({
                     <span>Español</span>
                   </button>
                 </div>
-                <div className="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-2">
-                  Español: <strong className="text-slate-800 dark:text-slate-200">{currentNumber.spanish}</strong> · Fonética: <span className="font-mono text-amber-700 dark:text-amber-400">[{currentNumber.phonetic}]</span>
+                <div className="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-2 flex flex-wrap items-center justify-center gap-2">
+                  <span>
+                    Español: <strong className="text-slate-800 dark:text-slate-200">{currentNumber.spanish}</strong>
+                  </span>
+                  {showPhonetics && (
+                    <span>
+                      · Fonética: <span className="font-mono text-amber-700 dark:text-amber-400">[{currentNumber.phonetic}]</span>
+                    </span>
+                  )}
+                  {showDialectNotes && (currentNumber.chanka || currentNumber.collao) && (
+                    <span>
+                      · Chanka: <strong>{currentNumber.chanka || currentNumber.quechua}</strong> / Collao:{' '}
+                      <strong>{currentNumber.collao || currentNumber.quechua}</strong>
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -267,18 +288,24 @@ export const NumbersGame: React.FC<NumbersGameProps> = ({
               </button>
             </div>
 
-            {/* Instruction badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-200/70 dark:bg-amber-950/70 text-amber-900 dark:text-amber-200 text-xs font-bold mb-6">
-              <Sparkles className="w-4 h-4 text-amber-600" />
-              <span>
-                {appLang === 'quechua'
-                  ? 'Yupaykunata llachpay: Hukmanta yupasunchis!'
-                  : '¡Toca cada objeto para contar en voz alta!'}
-              </span>
-            </div>
+            {/* Instruction badge (guided hint for Inicial/Explorador) */}
+            {showVisualHints && (
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-200/70 dark:bg-amber-950/70 text-amber-900 dark:text-amber-200 text-xs font-bold mb-6">
+                <Sparkles className="w-4 h-4 text-amber-600" />
+                <span>
+                  {appLang === 'quechua'
+                    ? `${profile.name}, yupaykunata llachpay: Hukmanta yupasunchis!`
+                    : `¡${profile.name}, toca cada figura para contar hasta ${currentNumber.number}!`}
+                </span>
+              </div>
+            )}
 
             {/* Objects to Count Grid */}
-            <div className="flex flex-wrap items-center justify-center gap-3 max-w-lg mx-auto py-3">
+            <div
+              className={`flex flex-wrap items-center justify-center max-w-lg mx-auto py-3 ${
+                cardScale === 'large' ? 'gap-4' : 'gap-3'
+              }`}
+            >
               {Array.from({ length: currentNumber.number }).map((_, idx) =>
                 renderObjectIcon(idx)
               )}

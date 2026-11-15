@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AppLanguage, QuechuaDialect, MemoryCard } from '../../types';
 import { MEMORY_CARDS_MASTER } from '../../data/gamesData';
 import { audioService } from '../../services/audioService';
+import { useUserProfile } from '../../context/UserProfileContext';
 import confetti from 'canvas-confetti';
 import { ChevronLeft, RotateCcw, Volume2, Trophy, Star, Sparkles } from 'lucide-react';
 import {
@@ -26,7 +27,8 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({
   dialect,
   onBackToHub,
 }) => {
-  const [difficulty, setDifficulty] = useState<Difficulty>('easy');
+  const { profile, awardStar } = useUserProfile();
+  const [difficulty, setDifficulty] = useState<Difficulty>(profile.config.defaultMemoryDifficulty);
   const [cards, setCards] = useState<MemoryCard[]>([]);
   const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
   const [matchedPairs, setMatchedPairs] = useState<string[]>([]);
@@ -65,6 +67,10 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({
   };
 
   useEffect(() => {
+    setDifficulty(profile.config.defaultMemoryDifficulty);
+  }, [profile.config.defaultMemoryDifficulty]);
+
+  useEffect(() => {
     initGame(difficulty);
   }, [difficulty]);
 
@@ -101,6 +107,7 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({
             // ALL MATCHED - VICTORY!
             setTimeout(() => {
               setIsVictory(true);
+              awardStar(`memory-${difficulty}`);
               audioService.playFanfare();
               confetti({
                 particleCount: 80,

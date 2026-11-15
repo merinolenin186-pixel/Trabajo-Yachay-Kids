@@ -9,6 +9,7 @@ import {
 } from '../../types';
 import { audioService } from '../../services/audioService';
 import { useAdmin } from '../../context/AdminContext';
+import { useUserProfile } from '../../context/UserProfileContext';
 import { CustomVideoPlayerModal } from '../videos/CustomVideoPlayerModal';
 import { AudioPlayerModal } from '../videos/AudioPlayerModal';
 import {
@@ -17,7 +18,7 @@ import {
   CornIllustration,
   RainbowIllustration,
 } from '../icons/AppIllustrations';
-import { Sparkles, ArrowRight, Layers, Volume2, Play, Film, Music, X } from 'lucide-react';
+import { Sparkles, ArrowRight, Layers, Volume2, Play, Film, Music, X, Star } from 'lucide-react';
 
 interface GamesHubProps {
   appLang: AppLanguage;
@@ -31,9 +32,12 @@ export const GamesHub: React.FC<GamesHubProps> = ({
   onSelectGame,
 }) => {
   const { customTexts, hiddenOptions, customSections, customVideos, customAudios } = useAdmin();
+  const { profile } = useUserProfile();
   const [activeSection, setActiveSection] = useState<CustomSection | null>(null);
   const [activeCustomVideo, setActiveCustomVideo] = useState<AdminVideoItem | null>(null);
   const [activeCustomAudio, setActiveCustomAudio] = useState<AdminAudioItem | null>(null);
+
+  const isLargeCards = profile.config.cardScale === 'large';
 
   const gamesList = [
     {
@@ -99,37 +103,82 @@ export const GamesHub: React.FC<GamesHubProps> = ({
     <div className="space-y-8">
       {/* Hero Welcome banner for Kids */}
       <div className="yachay-hero-banner relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white p-6 sm:p-8 shadow-md">
-        <div className="relative z-10 max-w-xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-xs font-bold mb-3">
-            <Sparkles className="w-4 h-4 text-amber-200" />
-            <span>
-              {customTexts.appName || 'Yachay Kids'} ·{' '}
-              {appLang === 'quechua' ? 'Kusisqa Yachakusunchis' : 'Educación Intercultural'}
-            </span>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="max-w-xl">
+            <div className="flex items-center gap-2 text-xs font-bold text-white/90 mb-2">
+              <Sparkles className="w-4 h-4 text-amber-200 shrink-0" />
+              <span>
+                {customTexts.appName || 'Yachay Kids'} ·{' '}
+                {appLang === 'quechua'
+                  ? `Allinllanchu, ${profile.name}!`
+                  : `¡Hola, ${profile.name}!`}
+              </span>
+            </div>
+
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-['Fredoka'] drop-shadow-sm text-balance">
+              {appLang === 'quechua'
+                ? customTexts.heroTitle.quechua
+                : customTexts.heroTitle.spanish}
+            </h2>
+
+            <p className="mt-2 text-sm sm:text-base text-white/95 font-medium">
+              {appLang === 'quechua'
+                ? customTexts.heroDescription.quechua
+                : customTexts.heroDescription.spanish}
+            </p>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-['Fredoka'] drop-shadow-sm">
-            {appLang === 'quechua'
-              ? customTexts.heroTitle.quechua
-              : customTexts.heroTitle.spanish}
-          </h2>
-
-          <p className="mt-2 text-sm sm:text-base text-white/90 font-medium">
-            {appLang === 'quechua'
-              ? customTexts.heroDescription.quechua
-              : customTexts.heroDescription.spanish}
-          </p>
-        </div>
-
-        {/* Floating illustrations on the right */}
-        <div className="hidden sm:block absolute -right-4 -bottom-6 opacity-90 transform hover:scale-105 transition-transform">
-          <LlamaIllustration className="w-36 h-36" />
+          {/* Interactive Child Avatar Card in Hero */}
+          <button
+            type="button"
+            onClick={() => {
+              audioService.playPop();
+              if (appLang === 'quechua') {
+                audioService.speakQuechua(
+                  `Allinllanchu ${profile.name}! Kunanqa pukllaykunawan yachakusunchis.`,
+                  dialect
+                );
+              } else {
+                audioService.speakSpanish(
+                  `¡Hola ${profile.name}! Vamos a aprender jugando juntos.`
+                );
+              }
+            }}
+            className="self-start md:self-auto flex items-center gap-3.5 p-3 pr-4 rounded-2xl bg-black/20 hover:bg-black/30 border border-white/25 backdrop-blur-sm transition active:scale-95 cursor-pointer shrink-0"
+            title="Toca tu foto para escuchar un saludo"
+          >
+            <img
+              src={profile.avatarImage}
+              alt={profile.name}
+              referrerPolicy="no-referrer"
+              className="w-16 h-16 rounded-xl object-cover border-2 border-white shadow"
+            />
+            <div className="text-left">
+              <span className="text-base font-extrabold text-white block leading-tight">
+                {profile.name}
+              </span>
+              <span className="inline-flex items-center gap-1 text-xs text-amber-200 font-bold mt-0.5 tabular-nums">
+                <Star className="w-3.5 h-3.5 fill-amber-300 text-amber-300" />
+                <span>{profile.stars} estrellas</span>
+              </span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-white/85 mt-1 block">
+                <Volume2 className="w-3.5 h-3.5 inline mr-1" />
+                <span>Toca para saludar</span>
+              </span>
+            </div>
+          </button>
         </div>
       </div>
 
       {/* Grid of Games */}
       {visibleGames.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div
+          className={`grid gap-4 sm:gap-6 ${
+            isLargeCards
+              ? 'grid-cols-1 md:grid-cols-2'
+              : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+          }`}
+        >
           {visibleGames.map(game => (
             <div
               key={game.id}
@@ -137,35 +186,55 @@ export const GamesHub: React.FC<GamesHubProps> = ({
                 audioService.playPop();
                 onSelectGame(game.id);
               }}
-              className="yachay-card-surface group relative cursor-pointer bg-white dark:bg-slate-800 rounded-3xl p-6 border-2 border-slate-200 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-500 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between"
+              className={`yachay-card-surface group relative cursor-pointer bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-500 shadow-sm hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1 flex flex-col justify-between ${
+                isLargeCards ? 'p-7 sm:p-8' : 'p-6'
+              }`}
               role="button"
               tabIndex={0}
             >
               <div>
-                {/* Card Header with Icon and Badge */}
+                {/* Card Header with Icon */}
                 <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 rounded-2xl bg-amber-50 dark:bg-slate-700/80 group-hover:scale-110 transition-transform">
+                  <div
+                    className={`rounded-2xl bg-amber-50 dark:bg-slate-700/80 group-hover:scale-110 transition-transform ${
+                      isLargeCards ? 'p-4 scale-110 origin-left' : 'p-3'
+                    }`}
+                  >
                     {game.icon}
                   </div>
-                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                     {appLang === 'quechua' ? game.badgeQuechua : game.badgeSpanish}
                   </span>
                 </div>
 
                 {/* Titles */}
-                <h3 className="text-xl font-extrabold text-slate-900 dark:text-white font-['Fredoka'] group-hover:text-amber-600 transition-colors">
+                <h3
+                  className={`font-extrabold text-slate-900 dark:text-white font-['Fredoka'] group-hover:text-amber-600 transition-colors ${
+                    isLargeCards ? 'text-2xl' : 'text-xl'
+                  }`}
+                >
                   {appLang === 'quechua' ? game.titleQuechua : game.titleSpanish}
                 </h3>
 
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-2 line-clamp-2">
+                <p
+                  className={`text-slate-600 dark:text-slate-300 mt-2 ${
+                    isLargeCards ? 'text-sm sm:text-base' : 'text-xs sm:text-sm line-clamp-2'
+                  }`}
+                >
                   {appLang === 'quechua' ? game.descQuechua : game.descSpanish}
                 </p>
               </div>
 
               {/* Play Button CTA */}
               <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-amber-600 dark:text-amber-400 font-bold text-xs sm:text-sm">
-                <span>{appLang === 'quechua' ? 'Pukllayta qallariy' : '¡Comenzar a jugar!'}</span>
-                <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center group-hover:translate-x-1 transition-transform">
+                <span>
+                  {appLang === 'quechua'
+                    ? 'Pukllayta qallariy'
+                    : isLargeCards
+                    ? '¡Toca aquí para jugar!'
+                    : '¡Comenzar a jugar!'}
+                </span>
+                <div className="w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center group-hover:translate-x-1 transition-transform">
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </div>

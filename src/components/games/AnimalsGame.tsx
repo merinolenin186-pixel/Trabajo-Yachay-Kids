@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AppLanguage, QuechuaDialect, AnimalItem } from '../../types';
 import { ANIMALS_DATA } from '../../data/gamesData';
 import { audioService } from '../../services/audioService';
+import { useUserProfile } from '../../context/UserProfileContext';
 import confetti from 'canvas-confetti';
 import { ChevronLeft, Volume2, CheckCircle2, RotateCcw, Sparkles } from 'lucide-react';
 import {
@@ -22,6 +23,8 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
   dialect,
   onBackToHub,
 }) => {
+  const { profile, awardStar } = useUserProfile();
+  const { showPhonetics, showDialectNotes, cardScale } = profile.config;
   const [activeTab, setActiveTab] = useState<'cards' | 'trivia'>('cards');
   const [selectedAnimal, setSelectedAnimal] = useState<AnimalItem>(ANIMALS_DATA[0]);
 
@@ -65,6 +68,7 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
       audioService.playSuccessSound();
       setTriviaFeedback('correct');
       setTriviaScore(s => s + 1);
+      awardStar(`animals-${currentTrivia.id}`);
       confetti({
         particleCount: 50,
         spread: 70,
@@ -154,8 +158,17 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
               </div>
 
               <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 mt-1">
-                Español: {selectedAnimal.name.spanish} · Fonética: [{selectedAnimal.name.phonetic}]
+                Español: {selectedAnimal.name.spanish}
+                {showPhonetics && selectedAnimal.name.phonetic && (
+                  <> · Fonética: [{selectedAnimal.name.phonetic}]</>
+                )}
               </p>
+              {showDialectNotes && selectedAnimal.name.dialectNotes && (
+                <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mt-1">
+                  Chanka: <strong>{selectedAnimal.name.dialectNotes.chanka || selectedAnimal.name.quechua}</strong> · Collao:{' '}
+                  <strong>{selectedAnimal.name.dialectNotes.collao || selectedAnimal.name.quechua}</strong>
+                </p>
+              )}
 
               {/* Badges for habitat & sound */}
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg w-full text-left">
@@ -196,7 +209,11 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
               {appLang === 'quechua' ? 'Uywakunata akllay:' : 'Selecciona un animal para conocerlo:'}
             </span>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div
+              className={`grid gap-3 ${
+                cardScale === 'large' ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'
+              }`}
+            >
               {ANIMALS_DATA.map(ani => {
                 const isCur = ani.id === selectedAnimal.id;
                 return (

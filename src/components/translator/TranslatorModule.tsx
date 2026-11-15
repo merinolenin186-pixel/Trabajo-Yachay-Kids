@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
+import { useUserProfile } from '../../context/UserProfileContext';
 
 interface TranslatorModuleProps {
   appLang: AppLanguage;
@@ -27,6 +28,8 @@ export const TranslatorModule: React.FC<TranslatorModuleProps> = ({
   dialect,
 }) => {
   const { customTexts } = useAdmin();
+  const { profile } = useUserProfile();
+  const { showPhonetics, showDialectNotes } = profile.config;
   const [fromLang, setFromLang] = useState<'es' | 'qu'>('es');
   const [inputText, setInputText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
@@ -290,9 +293,17 @@ export const TranslatorModule: React.FC<TranslatorModuleProps> = ({
                   </p>
                   {activeEntry && (
                     <div className="mt-2 space-y-1">
-                      <span className="text-xs font-semibold text-amber-800/80 dark:text-amber-300">
-                        Pronunciación: [{activeEntry.phonetic}]
-                      </span>
+                      {showPhonetics && (
+                        <span className="text-xs font-semibold text-amber-800/80 dark:text-amber-300 block">
+                          Pronunciación: [{activeEntry.phonetic}]
+                        </span>
+                      )}
+                      {showDialectNotes && (activeEntry.chankaVariation || activeEntry.collaoVariation) && (
+                        <span className="text-xs font-medium text-slate-600 dark:text-slate-300 block">
+                          Chanka: <strong>{activeEntry.chankaVariation || activeEntry.quechua}</strong> · Collao:{' '}
+                          <strong>{activeEntry.collaoVariation || activeEntry.quechua}</strong>
+                        </span>
+                      )}
                       {fromLang === 'es' && (
                         <p className="text-xs text-slate-600 dark:text-slate-400 italic">
                           Ejemplo: {activeEntry.exampleQuechua} ({activeEntry.exampleSpanish})

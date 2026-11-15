@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { useAdmin } from '../../context/AdminContext';
+import { useUserProfile } from '../../context/UserProfileContext';
 import {
   LlamaIllustration,
   CondorIllustration,
@@ -37,6 +38,8 @@ export const PictogramsModule: React.FC<PictogramsModuleProps> = ({
   const [fullscreenItem, setFullscreenItem] = useState<PictogramItem | null>(null);
   const { setIsCaaModalOpen } = useAccessibility();
   const { hiddenOptions, customTexts } = useAdmin();
+  const { profile } = useUserProfile();
+  const { cardScale, showPhonetics, showDialectNotes } = profile.config;
 
   const categories: { id: PictogramCategory; quechua: string; spanish: string; icon: string }[] = [
     { id: 'animales', quechua: 'Uywakuna', spanish: 'Animales', icon: '🦙' },
@@ -282,12 +285,22 @@ export const PictogramsModule: React.FC<PictogramsModuleProps> = ({
         </div>
       </div>
 
-      {/* Pictograms Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      {/* Pictograms Grid (Adapts density & details to User Level) */}
+      <div
+        className={`grid gap-4 ${
+          cardScale === 'large'
+            ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+            : cardScale === 'compact'
+            ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'
+            : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
+        }`}
+      >
         {filteredItems.map(item => (
           <div
             key={item.id}
-            className="group relative bg-white dark:bg-slate-800 rounded-3xl p-5 border-2 border-slate-200 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-500 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col items-center text-center justify-between"
+            className={`group relative bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-500 shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col items-center text-center justify-between ${
+              cardScale === 'large' ? 'p-6 sm:p-7' : 'p-5'
+            }`}
           >
             {/* Expand trigger */}
             <button
@@ -305,22 +318,37 @@ export const PictogramsModule: React.FC<PictogramsModuleProps> = ({
             {/* Illustration */}
             <div
               onClick={() => playQuechua(item)}
-              className="w-24 h-24 flex items-center justify-center my-2 cursor-pointer group-hover:scale-105 transition-transform"
+              className={`flex items-center justify-center my-2 cursor-pointer group-hover:scale-105 transition-transform ${
+                cardScale === 'large' ? 'w-28 h-28' : 'w-24 h-24'
+              }`}
             >
-              {renderPictogramDrawing(item.svgDrawing, 'w-20 h-20')}
+              {renderPictogramDrawing(
+                item.svgDrawing,
+                cardScale === 'large' ? 'w-24 h-24' : 'w-20 h-20'
+              )}
             </div>
 
             {/* Titles & Syllables */}
             <div className="w-full my-2">
-              <h3 className="text-xl font-extrabold text-slate-900 dark:text-white font-['Fredoka']">
+              <h3
+                className={`font-extrabold text-slate-900 dark:text-white font-['Fredoka'] ${
+                  cardScale === 'large' ? 'text-2xl' : 'text-xl'
+                }`}
+              >
                 {item.name.quechua}
               </h3>
               <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-0.5">
                 {item.name.spanish}
               </p>
-              {item.syllables && (
+              {showPhonetics && item.syllables && (
                 <span className="text-[11px] font-mono text-amber-700 dark:text-amber-400 block mt-1">
                   [{item.syllables}]
+                </span>
+              )}
+              {showDialectNotes && item.name.dialectNotes && (
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-1">
+                  Chanka: {item.name.dialectNotes.chanka || item.name.quechua} · Collao:{' '}
+                  {item.name.dialectNotes.collao || item.name.quechua}
                 </span>
               )}
             </div>

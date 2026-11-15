@@ -83,27 +83,27 @@ export const NonVerbalBoardModal: React.FC<NonVerbalBoardModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-      <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 shadow-2xl border-4 border-amber-400 text-slate-800 dark:text-slate-100 max-h-[94vh] flex flex-col space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+      <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-7 shadow-2xl border-4 border-amber-400 text-slate-800 dark:text-slate-100 max-h-[92vh] flex flex-col space-y-3 sm:space-y-4">
         {/* Modal Top Header */}
-        <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow">
+        <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow shrink-0">
               <HeartHandshake className="w-6 h-6" />
             </div>
-            <div>
-              <h2 className="text-xl sm:text-2xl font-black text-amber-950 dark:text-amber-200 font-['Fredoka']">
-                Tablero de Habla Inclusiva (CAA)
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-2xl font-black text-amber-950 dark:text-amber-200 font-['Fredoka'] leading-tight truncate">
+                Tablero de Habla (CAA)
               </h2>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Para personas o niños que no pueden hablar. Toca para que la app hable por ti.
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                Para niños que no pueden hablar. Toca para hablar por ti.
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 transition"
+            className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 transition shrink-0 cursor-pointer"
             aria-label="Cerrar tablero"
           >
             <X className="w-5 h-5" />
@@ -112,15 +112,15 @@ export const NonVerbalBoardModal: React.FC<NonVerbalBoardModalProps> = ({
 
         {/* Sentence Builder Strip */}
         <div className="p-3 rounded-2xl bg-amber-50 dark:bg-slate-800 border-2 border-amber-300 dark:border-slate-700 min-h-[76px] flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1">
-              <MessageSquarePlus className="w-3.5 h-3.5" />
-              <span>Frase construida (Toca para escuchar en voz alta):</span>
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1 truncate">
+              <MessageSquarePlus className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Frase construida:</span>
             </span>
             {selectedCards.length > 0 && (
               <button
                 onClick={handleClearSentence}
-                className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1"
+                className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1 shrink-0 cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Borrar</span>
@@ -148,41 +148,41 @@ export const NonVerbalBoardModal: React.FC<NonVerbalBoardModalProps> = ({
           </div>
 
           {selectedCards.length > 0 && (
-            <div className="flex items-center gap-2 pt-2 border-t border-amber-200/60 dark:border-slate-700 mt-2">
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-amber-200/60 dark:border-slate-700 mt-2">
               <button
                 onClick={() => handleSpeakSentence('quechua')}
-                className="flex-1 py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-sm flex items-center justify-center gap-1.5 transition active:scale-95"
+                className="py-2.5 min-h-[40px] px-2 sm:px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-sm flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
               >
-                <Volume2 className="w-4 h-4" />
-                <span>Hablar en Quechua</span>
+                <Volume2 className="w-4 h-4 shrink-0" />
+                <span className="truncate">Quechua</span>
               </button>
               <button
                 onClick={() => handleSpeakSentence('spanish')}
-                className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-sm flex items-center justify-center gap-1.5 transition active:scale-95"
+                className="py-2.5 min-h-[40px] px-2 sm:px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-sm flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
               >
-                <Volume2 className="w-4 h-4" />
-                <span>Hablar en Español</span>
+                <Volume2 className="w-4 h-4 shrink-0" />
+                <span className="truncate">Español</span>
               </button>
             </div>
           )}
         </div>
 
         {/* Pictograms Grid */}
-        <div className="flex-1 overflow-y-auto pr-1 grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="flex-1 overflow-y-auto pr-1 grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
           {CAA_CARDS.map(card => (
             <button
               key={card.id}
               onClick={() => handleTapCard(card)}
-              className="p-3.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-amber-400 bg-white dark:bg-slate-800/90 shadow-sm hover:shadow-md flex items-center gap-3 transition active:scale-90 text-left group"
+              className="p-2.5 sm:p-3.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-amber-400 bg-white dark:bg-slate-800/90 shadow-sm hover:shadow-md flex items-center gap-2 sm:gap-3 min-h-[64px] transition active:scale-90 text-left group cursor-pointer"
             >
-              <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-slate-700 flex items-center justify-center text-2xl shrink-0 group-hover:scale-110 transition-transform">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-100 dark:bg-slate-700 flex items-center justify-center text-xl sm:text-2xl shrink-0 group-hover:scale-110 transition-transform">
                 {card.icon}
               </div>
-              <div className="overflow-hidden flex-1">
-                <span className="block text-sm font-extrabold text-slate-900 dark:text-white font-['Fredoka'] truncate">
+              <div className="overflow-hidden flex-1 min-w-0">
+                <span className="block text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white font-['Fredoka'] truncate">
                   {card.quechua}
                 </span>
-                <span className="block text-[11px] text-slate-600 dark:text-slate-300 line-clamp-1 leading-tight">
+                <span className="block text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2 leading-tight">
                   {card.spanish}
                 </span>
               </div>

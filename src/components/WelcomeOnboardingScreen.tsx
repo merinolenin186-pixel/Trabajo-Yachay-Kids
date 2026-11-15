@@ -137,32 +137,32 @@ export const WelcomeOnboardingScreen: React.FC<WelcomeOnboardingScreenProps> = (
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/60 to-amber-100/70 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between p-4 sm:p-6 lg:p-8 font-['Fredoka']">
+    <div className="min-h-screen overflow-x-clip bg-gradient-to-b from-amber-50 via-orange-50/60 to-amber-100/70 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between p-3 sm:p-6 lg:p-8 pb-[max(1rem,env(safe-area-inset-bottom))] font-['Fredoka']">
       {/* Top Minimal Brand Header */}
-      <div className="max-w-5xl w-full mx-auto flex items-center justify-between gap-4 pb-4">
+      <div className="max-w-5xl w-full mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-2xl shadow-md">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-xl sm:text-2xl shadow-md shrink-0">
             ☀️
           </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-amber-950 dark:text-amber-200 tracking-tight leading-none">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-3xl font-extrabold text-amber-950 dark:text-amber-200 tracking-tight leading-none">
               Yachay Kids
             </h1>
-            <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-1">
+            <p className="text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 mt-1 truncate">
               Educación Inicial Bilingüe · Quechua & Español
             </p>
           </div>
         </div>
 
         {/* Step Indicator */}
-        <div className="flex items-center gap-2 text-xs font-bold">
+        <div className="grid grid-cols-2 sm:flex items-center gap-2 text-xs font-bold w-full sm:w-auto">
           <button
             type="button"
             onClick={() => {
               audioService.playPop();
               setStep(1);
             }}
-            className={`px-3.5 py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${
+            className={`px-3 py-2.5 min-h-[44px] rounded-xl transition cursor-pointer whitespace-nowrap text-center ${
               step === 1
                 ? 'bg-amber-500 text-white shadow-sm'
                 : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
@@ -176,7 +176,7 @@ export const WelcomeOnboardingScreen: React.FC<WelcomeOnboardingScreenProps> = (
               audioService.playPop();
               setStep(2);
             }}
-            className={`px-3.5 py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${
+            className={`px-3 py-2.5 min-h-[44px] rounded-xl transition cursor-pointer whitespace-nowrap text-center ${
               step === 2
                 ? 'bg-amber-500 text-white shadow-sm'
                 : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
@@ -188,19 +188,19 @@ export const WelcomeOnboardingScreen: React.FC<WelcomeOnboardingScreenProps> = (
       </div>
 
       {/* Main Centered Onboarding Card */}
-      <div className="max-w-5xl w-full mx-auto my-auto bg-white dark:bg-slate-900 rounded-3xl border border-amber-200 dark:border-slate-800 shadow-xl p-5 sm:p-8 lg:p-10">
+      <div className="max-w-5xl w-full mx-auto my-auto bg-white dark:bg-slate-900 rounded-3xl border border-amber-200 dark:border-slate-800 shadow-xl p-4 sm:p-8 lg:p-10">
         {step === 1 ? (
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {/* Step 1 Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4 sm:pb-6">
               <div className="space-y-1.5 max-w-2xl">
                 <p className="text-xs font-bold text-amber-700 dark:text-amber-400">
                   Allin hamusqayki · Bienvenido a jugar
                 </p>
-                <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight text-balance">
+                <h2 className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight text-balance leading-tight">
                   ¿Cómo te gustaría llamarte? Elige tu amiguito favorito
                 </h2>
-                <p className="text-sm text-slate-600 dark:text-slate-300 font-['Plus_Jakarta_Sans']">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-['Plus_Jakarta_Sans']">
                   Toca cualquier dibujito para escucharlo saludar y elegir tu nombre, o escribe el tuyo abajo.
                 </p>
               </div>
@@ -242,7 +242,7 @@ export const WelcomeOnboardingScreen: React.FC<WelcomeOnboardingScreenProps> = (
             </div>
 
             {/* Interactive Generated Preschool Mascot Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
               {AVATAR_OPTIONS.map(avatar => {
                 const isSelected = selectedAvatarId === avatar.id;
                 const isWaving = activeWaveId === avatar.id;
@@ -340,7 +340,7 @@ export const WelcomeOnboardingScreen: React.FC<WelcomeOnboardingScreenProps> = (
                 />
               </div>
 
-              <div className="lg:col-span-5 flex flex-wrap sm:flex-nowrap items-center gap-3">
+              <div className="lg:col-span-5 grid grid-cols-2 sm:flex sm:flex-nowrap items-center gap-2.5 sm:gap-3">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -351,10 +351,10 @@ export const WelcomeOnboardingScreen: React.FC<WelcomeOnboardingScreenProps> = (
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full sm:w-auto flex-1 px-4 py-3 rounded-xl bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 hover:border-amber-400 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer whitespace-nowrap"
+                  className="w-full sm:flex-1 px-3 sm:px-4 py-3 min-h-[44px] rounded-xl bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 hover:border-amber-400 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer whitespace-nowrap"
                 >
-                  <Camera className="w-4 h-4 text-amber-600" />
-                  <span>{customImage ? 'Cambiar mi foto' : 'Subir mi foto'}</span>
+                  <Camera className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>{customImage ? 'Cambiar foto' : 'Subir foto'}</span>
                 </button>
 
                 <button
@@ -363,23 +363,23 @@ export const WelcomeOnboardingScreen: React.FC<WelcomeOnboardingScreenProps> = (
                     audioService.playPop();
                     setStep(2);
                   }}
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-sm shadow-md active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                  className="w-full sm:w-auto px-4 sm:px-6 py-3 min-h-[44px] rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-sm shadow-md active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                 >
                   <span>Siguiente</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-4 h-4 shrink-0" />
                 </button>
               </div>
             </div>
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {/* Step 2 Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-slate-100 dark:border-slate-800 pb-4 sm:pb-5">
               <div>
                 <p className="text-xs font-bold text-amber-700 dark:text-amber-400">
                   Último paso para empezar a jugar
                 </p>
-                <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mt-0.5">
+                <h2 className="text-xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mt-0.5 leading-tight">
                   ¡Hola, {displayName}! ¿En qué idioma quieres aprender?
                 </h2>
               </div>
@@ -390,7 +390,7 @@ export const WelcomeOnboardingScreen: React.FC<WelcomeOnboardingScreenProps> = (
                   audioService.playPop();
                   setStep(1);
                 }}
-                className="self-start sm:self-auto px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap"
+                className="self-start sm:self-auto px-4 py-2.5 min-h-[44px] rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Cambiar nombre o foto</span>

@@ -276,38 +276,38 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           {renderBackground()}
 
           {/* Characters on stage */}
-          <div className="relative z-10 w-full px-8 pb-4 flex items-end justify-around">
+          <div className="relative z-10 w-full px-4 sm:px-8 pb-3 sm:pb-4 flex items-end justify-around scale-75 sm:scale-100 origin-bottom">
             {currentScene.characters.map((c, i) => renderCharacter(c, i))}
           </div>
 
           {/* Subtitles Overlay */}
-          <div className="absolute top-3 left-3 right-3 z-20">
-            <div className="max-w-xl mx-auto p-3 rounded-2xl bg-black/75 backdrop-blur-md border border-white/20 text-center shadow-lg transition-all">
+          <div className="absolute top-2 sm:top-3 left-2 sm:left-3 right-2 sm:right-3 z-20">
+            <div className="max-w-xl mx-auto p-2 sm:p-3 rounded-2xl bg-black/75 backdrop-blur-md border border-white/20 text-center shadow-lg transition-all">
               {subtitleMode === 'auto' ? (
                 appLang === 'quechua' ? (
                   <>
-                    <p className="text-base sm:text-lg font-extrabold text-amber-300 font-['Fredoka']">
+                    <p className="text-sm sm:text-lg font-extrabold text-amber-300 font-['Fredoka'] leading-snug">
                       «{currentScene.subtitlesQuechua}»
                     </p>
-                    <p className="text-xs text-slate-300 mt-0.5">{currentScene.subtitlesSpanish}</p>
+                    <p className="text-[11px] sm:text-xs text-slate-300 mt-0.5 leading-snug">{currentScene.subtitlesSpanish}</p>
                   </>
                 ) : (
                   <>
-                    <p className="text-base sm:text-lg font-extrabold text-white font-['Fredoka']">
+                    <p className="text-sm sm:text-lg font-extrabold text-white font-['Fredoka'] leading-snug">
                       «{currentScene.subtitlesSpanish}»
                     </p>
-                    <p className="text-xs text-amber-300 mt-0.5">{currentScene.subtitlesQuechua}</p>
+                    <p className="text-[11px] sm:text-xs text-amber-300 mt-0.5 leading-snug">{currentScene.subtitlesQuechua}</p>
                   </>
                 )
               ) : (
                 <>
                   {(subtitleMode === 'both' || subtitleMode === 'quechua') && (
-                    <p className="text-base sm:text-lg font-extrabold text-amber-300 font-['Fredoka']">
+                    <p className="text-sm sm:text-lg font-extrabold text-amber-300 font-['Fredoka'] leading-snug">
                       «{currentScene.subtitlesQuechua}»
                     </p>
                   )}
                   {(subtitleMode === 'both' || subtitleMode === 'spanish') && (
-                    <p className="text-xs sm:text-sm font-medium text-slate-200 mt-0.5">
+                    <p className="text-xs sm:text-sm font-medium text-slate-200 mt-0.5 leading-snug">
                       {currentScene.subtitlesSpanish}
                     </p>
                   )}
@@ -318,7 +318,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
         </div>
 
         {/* Video Controls Toolbar */}
-        <div className="p-4 bg-slate-950 text-white space-y-3">
+        <div className="p-3 sm:p-4 bg-slate-950 text-white space-y-3">
           {/* Timeline progress */}
           <div className="flex items-center gap-1.5 w-full">
             {story.scenes.map((scene, idx) => (
@@ -328,7 +328,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
                   audioService.playPop();
                   setCurrentSceneIdx(idx);
                 }}
-                className={`h-2.5 rounded-full flex-1 transition-all ${
+                className={`h-2.5 rounded-full flex-1 transition-all cursor-pointer ${
                   idx === currentSceneIdx
                     ? 'bg-amber-400 scale-y-125'
                     : idx < currentSceneIdx
@@ -341,11 +341,11 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           </div>
 
           {/* Control Buttons */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <button
                 onClick={handleTogglePlay}
-                className="w-11 h-11 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 flex items-center justify-center font-bold shadow-md active:scale-95 transition"
+                className="w-11 h-11 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 flex items-center justify-center font-bold shadow-md active:scale-95 transition cursor-pointer"
                 aria-label={isPlaying ? 'Pausar' : 'Reproducir'}
               >
                 {isPlaying ? <Pause className="w-5 h-5 fill-slate-950" /> : <Play className="w-5 h-5 fill-slate-950 ml-0.5" />}
@@ -353,7 +353,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 
               <button
                 onClick={handleRestart}
-                className="w-10 h-10 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition"
+                className="w-10 h-10 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition cursor-pointer"
                 title="Reiniciar cuento"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -361,7 +361,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 
               <button
                 onClick={() => audioService.speakQuechua(currentScene.narrationQuechua, dialect)}
-                className="w-10 h-10 rounded-2xl bg-slate-800 hover:bg-slate-700 text-amber-400 flex items-center justify-center transition"
+                className="w-10 h-10 rounded-2xl bg-slate-800 hover:bg-slate-700 text-amber-400 flex items-center justify-center transition cursor-pointer"
                 title="Repetir audio en quechua"
               >
                 <Volume2 className="w-4 h-4" />
@@ -372,12 +372,12 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
             <div className="flex items-center gap-2 text-xs font-bold">
               <button
                 onClick={toggleSubtitles}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition"
+                className="flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition cursor-pointer"
               >
-                <Subtitles className="w-4 h-4 text-amber-400" />
+                <Subtitles className="w-4 h-4 text-amber-400 shrink-0" />
                 <span>
                   {subtitleMode === 'auto'
-                    ? `Auto (${appLang === 'quechua' ? 'Quechua' : 'Español'})`
+                    ? `Auto (${appLang === 'quechua' ? 'QU' : 'ES'})`
                     : subtitleMode === 'both'
                     ? 'Bilingüe'
                     : subtitleMode === 'quechua'
@@ -388,10 +388,10 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 
               <button
                 onClick={toggleSpeed}
-                className="flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition"
+                className="flex items-center gap-1 px-3 py-2 min-h-[40px] rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition cursor-pointer"
                 title="Velocidad para niños"
               >
-                <Gauge className="w-4 h-4 text-emerald-400" />
+                <Gauge className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>{playbackSpeed}x</span>
               </button>
             </div>

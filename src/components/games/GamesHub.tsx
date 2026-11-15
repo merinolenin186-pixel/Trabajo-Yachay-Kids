@@ -100,14 +100,14 @@ export const GamesHub: React.FC<GamesHubProps> = ({
   const visibleGames = gamesList.filter(g => !hiddenOptions.games.includes(g.id));
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Hero Welcome banner for Kids */}
-      <div className="yachay-hero-banner relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white p-6 sm:p-8 shadow-md">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="max-w-xl">
-            <div className="flex items-center gap-2 text-xs font-bold text-white/90 mb-2">
+      <div className="yachay-hero-banner relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white p-5 sm:p-8 shadow-md">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+          <div className="max-w-xl min-w-0">
+            <div className="flex items-center gap-2 text-xs font-bold text-white/90 mb-1.5 sm:mb-2">
               <Sparkles className="w-4 h-4 text-amber-200 shrink-0" />
-              <span>
+              <span className="truncate">
                 {customTexts.appName || 'Yachay Kids'} ·{' '}
                 {appLang === 'quechua'
                   ? `Allinllanchu, ${profile.name}!`
@@ -115,13 +115,13 @@ export const GamesHub: React.FC<GamesHubProps> = ({
               </span>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-['Fredoka'] drop-shadow-sm text-balance">
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight font-['Fredoka'] drop-shadow-sm text-balance leading-tight">
               {appLang === 'quechua'
                 ? customTexts.heroTitle.quechua
                 : customTexts.heroTitle.spanish}
             </h2>
 
-            <p className="mt-2 text-sm sm:text-base text-white/95 font-medium">
+            <p className="mt-2 text-xs sm:text-base text-white/95 font-medium">
               {appLang === 'quechua'
                 ? customTexts.heroDescription.quechua
                 : customTexts.heroDescription.spanish}
@@ -144,17 +144,17 @@ export const GamesHub: React.FC<GamesHubProps> = ({
                 );
               }
             }}
-            className="self-start md:self-auto flex items-center gap-3.5 p-3 pr-4 rounded-2xl bg-black/20 hover:bg-black/30 border border-white/25 backdrop-blur-sm transition active:scale-95 cursor-pointer shrink-0"
+            className="w-full sm:w-auto self-start md:self-auto flex items-center gap-3 p-2.5 sm:p-3 pr-4 rounded-2xl bg-black/20 hover:bg-black/30 border border-white/25 backdrop-blur-sm transition active:scale-95 cursor-pointer shrink-0"
             title="Toca tu foto para escuchar un saludo"
           >
             <img
               src={profile.avatarImage}
               alt={profile.name}
               referrerPolicy="no-referrer"
-              className="w-16 h-16 rounded-xl object-cover border-2 border-white shadow"
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border-2 border-white shadow shrink-0"
             />
-            <div className="text-left">
-              <span className="text-base font-extrabold text-white block leading-tight">
+            <div className="text-left min-w-0">
+              <span className="text-base font-extrabold text-white block leading-tight truncate">
                 {profile.name}
               </span>
               <span className="inline-flex items-center gap-1 text-xs text-amber-200 font-bold mt-0.5 tabular-nums">
@@ -187,7 +187,7 @@ export const GamesHub: React.FC<GamesHubProps> = ({
                 onSelectGame(game.id);
               }}
               className={`yachay-card-surface group relative cursor-pointer bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-500 shadow-sm hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1 flex flex-col justify-between ${
-                isLargeCards ? 'p-7 sm:p-8' : 'p-6'
+                isLargeCards ? 'p-5 sm:p-8' : 'p-4 sm:p-6'
               }`}
               role="button"
               tabIndex={0}

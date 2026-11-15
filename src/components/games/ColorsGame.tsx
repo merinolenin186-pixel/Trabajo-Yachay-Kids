@@ -74,53 +74,53 @@ export const ColorsGame: React.FC<ColorsGameProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-5 sm:space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
         <button
           onClick={onBackToHub}
-          className="flex items-center gap-2 text-sm font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 transition"
+          className="flex items-center gap-2 min-h-[40px] text-sm font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 transition cursor-pointer"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-5 h-5 shrink-0" />
           <span>{appLang === 'quechua' ? 'Kutiy pukllaykunaman' : 'Volver a juegos'}</span>
         </button>
 
         {/* Mode switch */}
-        <div className="flex items-center gap-1.5 p-1 bg-amber-50 dark:bg-slate-900 rounded-xl border border-amber-200 dark:border-slate-700">
+        <div className="grid grid-cols-2 sm:flex items-center gap-1 p-1 bg-amber-50 dark:bg-slate-900 rounded-xl border border-amber-200 dark:border-slate-700 w-full sm:w-auto">
           <button
             onClick={() => {
               audioService.playPop();
               setActiveTab('explore');
             }}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
+            className={`px-3 sm:px-4 py-2 min-h-[40px] rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
               activeTab === 'explore'
                 ? 'bg-amber-500 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-300 hover:text-amber-600'
             }`}
           >
-            {appLang === 'quechua' ? '1. Llimpikuna (Aprender)' : '1. Aprender Colores'}
+            {appLang === 'quechua' ? '1. Llimpikuna' : '1. Aprender Colores'}
           </button>
           <button
             onClick={() => {
               audioService.playPop();
               setActiveTab('quiz');
             }}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
+            className={`px-3 sm:px-4 py-2 min-h-[40px] rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
               activeTab === 'quiz'
                 ? 'bg-amber-500 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-300 hover:text-amber-600'
             }`}
           >
-            {appLang === 'quechua' ? '2. Taripay (Adivina)' : '2. Adivina el Color'}
+            {appLang === 'quechua' ? '2. Taripay' : '2. Adivina el Color'}
           </button>
         </div>
       </div>
 
       {activeTab === 'explore' ? (
         /* EXPLORE MODE */
-        <div className="space-y-6">
+        <div className="space-y-5 sm:space-y-6">
           {/* Main Selected Color Showcase */}
-          <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 text-center space-y-6">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-4 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 text-center space-y-5 sm:space-y-6">
             <div className="flex flex-col items-center">
               {/* Giant Color Circle */}
               <div
@@ -180,8 +180,8 @@ export const ColorsGame: React.FC<ColorsGameProps> = ({
                 {appLang === 'quechua' ? 'Llimpita akllay:' : 'Toca un color para aprender:'}
               </span>
               <div
-                className={`grid gap-3 ${
-                  cardScale === 'large' ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'
+                className={`grid gap-2.5 sm:gap-3 grid-cols-2 ${
+                  cardScale === 'large' ? 'sm:grid-cols-3' : 'sm:grid-cols-4'
                 }`}
               >
                 {COLORS_DATA.map(col => {
@@ -194,7 +194,7 @@ export const ColorsGame: React.FC<ColorsGameProps> = ({
                         setSelectedColor(col);
                         playColorPronunciation(col);
                       }}
-                      className={`p-3 rounded-2xl border-2 flex items-center gap-3 transition active:scale-95 ${
+                      className={`p-3 rounded-2xl border-2 flex items-center gap-2.5 sm:gap-3 min-h-[54px] transition active:scale-95 cursor-pointer ${
                         isCur
                           ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/40 shadow-sm'
                           : 'border-slate-200 dark:border-slate-700 hover:border-amber-300 bg-white dark:bg-slate-800'
@@ -204,7 +204,7 @@ export const ColorsGame: React.FC<ColorsGameProps> = ({
                         className="w-8 h-8 rounded-full border border-slate-300 shadow-sm shrink-0"
                         style={{ backgroundColor: col.colorHex }}
                       />
-                      <div className="text-left overflow-hidden">
+                      <div className="text-left overflow-hidden min-w-0">
                         <span className="block text-sm font-bold text-slate-800 dark:text-slate-100 font-['Fredoka'] truncate">
                           {col.name.quechua}
                         </span>
@@ -221,7 +221,7 @@ export const ColorsGame: React.FC<ColorsGameProps> = ({
         </div>
       ) : (
         /* QUIZ MODE */
-        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 text-center space-y-6">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-4 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 text-center space-y-5 sm:space-y-6">
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
               {appLang === 'quechua' ? `Puntos: ${quizScore}` : `Aciertos: ${quizScore}`}

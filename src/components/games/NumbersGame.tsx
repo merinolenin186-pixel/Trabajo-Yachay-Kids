@@ -174,44 +174,44 @@ export const NumbersGame: React.FC<NumbersGameProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-5 sm:space-y-6">
       {/* Top Header / Mode Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
         <button
           onClick={onBackToHub}
-          className="flex items-center gap-2 text-sm font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 transition"
+          className="flex items-center gap-2 min-h-[40px] text-sm font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 transition cursor-pointer"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-5 h-5 shrink-0" />
           <span>{appLang === 'quechua' ? 'Kutiy pukllaykunaman' : 'Volver a juegos'}</span>
         </button>
 
         {/* Tab switch */}
-        <div className="flex items-center gap-1 p-1 bg-amber-50 dark:bg-slate-900 rounded-xl border border-amber-200 dark:border-slate-700">
+        <div className="grid grid-cols-2 sm:flex items-center gap-1 p-1 bg-amber-50 dark:bg-slate-900 rounded-xl border border-amber-200 dark:border-slate-700 w-full sm:w-auto">
           <button
             onClick={() => {
               audioService.playPop();
               setActiveTab('learn');
             }}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap ${
+            className={`px-3 sm:px-4 py-2 min-h-[40px] rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
               activeTab === 'learn'
                 ? 'bg-amber-500 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-300 hover:text-amber-600'
             }`}
           >
-            {appLang === 'quechua' ? '1. Yachakuy (Aprender)' : '1. Aprender y Contar'}
+            {appLang === 'quechua' ? '1. Yachakuy' : '1. Aprender y Contar'}
           </button>
           <button
             onClick={() => {
               audioService.playPop();
               setActiveTab('quiz');
             }}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition whitespace-nowrap ${
+            className={`px-3 sm:px-4 py-2 min-h-[40px] rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
               activeTab === 'quiz'
                 ? 'bg-amber-500 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-300 hover:text-amber-600'
             }`}
           >
-            {appLang === 'quechua' ? '2. Pukllay (Desafío)' : '2. Desafío / Preguntas'}
+            {appLang === 'quechua' ? '2. Pukllay' : '2. Desafío'}
           </button>
         </div>
       </div>
@@ -219,49 +219,51 @@ export const NumbersGame: React.FC<NumbersGameProps> = ({
       {activeTab === 'learn' ? (
         /* MODE 1: LEARN & COUNT */
         <div className="space-y-6">
-          <div className="bg-gradient-to-b from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-900 rounded-3xl p-6 sm:p-8 shadow-sm border-2 border-amber-300 dark:border-amber-700 text-center">
+          <div className="bg-gradient-to-b from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-900 rounded-3xl p-4 sm:p-8 shadow-sm border-2 border-amber-300 dark:border-amber-700 text-center">
             {/* Number Selector Header */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between gap-2 mb-4">
               <button
                 onClick={handlePrevNumber}
-                className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 text-amber-700 dark:text-amber-300 border-2 border-amber-200 dark:border-slate-700 shadow-sm flex items-center justify-center hover:bg-amber-100 active:scale-95 transition"
+                className="w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-2xl bg-white dark:bg-slate-800 text-amber-700 dark:text-amber-300 border-2 border-amber-200 dark:border-slate-700 shadow-sm flex items-center justify-center hover:bg-amber-100 active:scale-95 transition cursor-pointer"
                 aria-label="Número anterior"
               >
                 <ChevronLeft className="w-6 h-6" />
               </button>
 
-              <div className="flex flex-col items-center">
-                <span className="text-7xl sm:text-8xl font-black text-amber-600 dark:text-amber-400 font-['Fredoka'] drop-shadow-sm">
+              <div className="flex flex-col items-center min-w-0 flex-1">
+                <span className="text-6xl sm:text-8xl font-black text-amber-600 dark:text-amber-400 font-['Fredoka'] drop-shadow-sm leading-none">
                   {currentNumber.number}
                 </span>
-                <div className="flex items-center gap-3 mt-1">
-                  <h3 className="text-3xl sm:text-4xl font-extrabold text-slate-800 dark:text-white font-['Fredoka']">
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-2">
+                  <h3 className="text-2xl sm:text-4xl font-extrabold text-slate-800 dark:text-white font-['Fredoka']">
                     {dialect === 'chanka' && currentNumber.chanka
                       ? currentNumber.chanka
                       : dialect === 'collao' && currentNumber.collao
                       ? currentNumber.collao
                       : currentNumber.quechua}
                   </h3>
-                  <button
-                    onClick={() => playPronunciation(currentNumber)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md active:scale-95 transition cursor-pointer"
-                    title="Escuchar en quechua"
-                    aria-label={`Escuchar ${currentNumber.quechua} en quechua`}
-                  >
-                    <Volume2 className="w-4 h-4" />
-                    <span>Quechua</span>
-                  </button>
-                  <button
-                    onClick={() => audioService.speakSpanish(currentNumber.spanish)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-100 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 font-bold text-xs shadow-sm active:scale-95 transition cursor-pointer"
-                    title="Escuchar en español"
-                    aria-label={`Escuchar ${currentNumber.spanish} en español`}
-                  >
-                    <Volume2 className="w-4 h-4 text-amber-600" />
-                    <span>Español</span>
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => playPronunciation(currentNumber)}
+                      className="flex items-center gap-1.5 px-3 py-2 min-h-[38px] rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md active:scale-95 transition cursor-pointer"
+                      title="Escuchar en quechua"
+                      aria-label={`Escuchar ${currentNumber.quechua} en quechua`}
+                    >
+                      <Volume2 className="w-4 h-4 shrink-0" />
+                      <span>Quechua</span>
+                    </button>
+                    <button
+                      onClick={() => audioService.speakSpanish(currentNumber.spanish)}
+                      className="flex items-center gap-1.5 px-3 py-2 min-h-[38px] rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-100 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 font-bold text-xs shadow-sm active:scale-95 transition cursor-pointer"
+                      title="Escuchar en español"
+                      aria-label={`Escuchar ${currentNumber.spanish} en español`}
+                    >
+                      <Volume2 className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span>Español</span>
+                    </button>
+                  </div>
                 </div>
-                <div className="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-2 flex flex-wrap items-center justify-center gap-2">
+                <div className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
                   <span>
                     Español: <strong className="text-slate-800 dark:text-slate-200">{currentNumber.spanish}</strong>
                   </span>
@@ -281,7 +283,7 @@ export const NumbersGame: React.FC<NumbersGameProps> = ({
 
               <button
                 onClick={handleNextNumber}
-                className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 text-amber-700 dark:text-amber-300 border-2 border-amber-200 dark:border-slate-700 shadow-sm flex items-center justify-center hover:bg-amber-100 active:scale-95 transition"
+                className="w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-2xl bg-white dark:bg-slate-800 text-amber-700 dark:text-amber-300 border-2 border-amber-200 dark:border-slate-700 shadow-sm flex items-center justify-center hover:bg-amber-100 active:scale-95 transition cursor-pointer"
                 aria-label="Número siguiente"
               >
                 <ChevronRight className="w-6 h-6" />
@@ -350,14 +352,14 @@ export const NumbersGame: React.FC<NumbersGameProps> = ({
           </div>
 
           {/* Quick Selector 1 al 10 (Hukmanta Chunkakama) */}
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
+          <div className="bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
               <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
                 {appLang === 'quechua'
                   ? 'Yupaykunata akllay (1 chunka kama):'
-                  : 'Seleccionar número directo (del 1 al 10):'}
+                  : 'Seleccionar número directo (1 al 10):'}
               </span>
-              <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+              <span className="text-[11px] font-extrabold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
                 1 al 10 / Hukmanta Chunka
               </span>
             </div>
@@ -394,7 +396,7 @@ export const NumbersGame: React.FC<NumbersGameProps> = ({
         </div>
       ) : (
         /* MODE 2: QUIZ CHALLENGE */
-        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 text-center space-y-6">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-4 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 text-center space-y-5 sm:space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-bold text-amber-600 dark:text-amber-400">
               <Award className="w-5 h-5" />
@@ -419,7 +421,7 @@ export const NumbersGame: React.FC<NumbersGameProps> = ({
           </div>
 
           {/* Visual representations to count */}
-          <div className="flex flex-wrap items-center justify-center gap-3 p-6 bg-amber-50 dark:bg-slate-900 rounded-2xl border-2 border-dashed border-amber-200 dark:border-slate-700 min-h-[140px]">
+          <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 p-4 sm:p-6 bg-amber-50 dark:bg-slate-900 rounded-2xl border-2 border-dashed border-amber-200 dark:border-slate-700 min-h-[120px] sm:min-h-[140px]">
             {Array.from({ length: quizTarget.number }).map((_, idx) => (
               <div key={idx} className="p-1 animate-pulse-subtle">
                 {quizTarget.objectType === 'vicuna' ? (
@@ -438,7 +440,7 @@ export const NumbersGame: React.FC<NumbersGameProps> = ({
           </div>
 
           {/* Answer Options */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-md mx-auto">
+          <div className="grid grid-cols-3 gap-2.5 sm:gap-3 max-w-md mx-auto">
             {quizOptions.map(numVal => {
               const item = NUMBERS_DATA.find(n => n.number === numVal)!;
               const isSelected = selectedOption === numVal;

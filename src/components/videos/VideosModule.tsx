@@ -93,38 +93,38 @@ export const VideosModule: React.FC<VideosModuleProps> = ({
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="yachay-hero-banner bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-600 text-white p-6 sm:p-8 rounded-3xl shadow-sm">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-xs font-bold mb-3">
-          <Sparkles className="w-4 h-4 text-amber-200" />
-          <span>Biblioteca Audiovisual Bilingüe · Subtítulos Automáticos</span>
+      <div className="yachay-hero-banner bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-600 text-white p-5 sm:p-8 rounded-3xl shadow-sm">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-[11px] sm:text-xs font-bold mb-2.5 sm:mb-3">
+          <Sparkles className="w-3.5 h-3.5 text-amber-200 shrink-0" />
+          <span>Biblioteca Bilingüe · Subtítulos Automáticos</span>
         </div>
-        <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-['Fredoka']">
+        <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight font-['Fredoka'] leading-tight">
           {appLang === 'quechua'
             ? customTexts.videosBannerTitle.quechua
             : customTexts.videosBannerTitle.spanish}
         </h2>
-        <p className="mt-2 text-sm sm:text-base text-purple-100 max-w-xl">
+        <p className="mt-2 text-xs sm:text-base text-purple-100 max-w-xl">
           {appLang === 'quechua'
             ? customTexts.videosBannerDescription.quechua
             : customTexts.videosBannerDescription.spanish}
         </p>
 
         {/* Switch between Videos & Audios */}
-        <div className="mt-5 inline-flex items-center gap-1 p-1 bg-black/20 rounded-2xl">
+        <div className="mt-4 sm:mt-5 grid grid-cols-2 sm:inline-flex items-center gap-1 p-1 bg-black/20 rounded-2xl w-full sm:w-auto">
           <button
             onClick={() => {
               audioService.playPop();
               setMediaView('videos');
             }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 sm:px-4 py-2.5 min-h-[42px] rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer truncate ${
               mediaView === 'videos'
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-white/85 hover:text-white'
             }`}
           >
-            <Film className="w-4 h-4" />
-            <span>
-              {appLang === 'quechua' ? 'Videokuna' : 'Videos y Cuentos'} ({filteredBuiltin.length + filteredCustomVideos.length})
+            <Film className="w-4 h-4 shrink-0" />
+            <span className="truncate">
+              {appLang === 'quechua' ? 'Videokuna' : 'Videos'} ({filteredBuiltin.length + filteredCustomVideos.length})
             </span>
           </button>
           <button
@@ -132,15 +132,15 @@ export const VideosModule: React.FC<VideosModuleProps> = ({
               audioService.playPop();
               setMediaView('audios');
             }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 sm:px-4 py-2.5 min-h-[42px] rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer truncate ${
               mediaView === 'audios'
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-white/85 hover:text-white'
             }`}
           >
-            <Volume2 className="w-4 h-4" />
-            <span>
-              {appLang === 'quechua' ? 'Uyarinapaq (Audios)' : 'Audios Educativos'} ({visibleAudios.length})
+            <Volume2 className="w-4 h-4 shrink-0" />
+            <span className="truncate">
+              {appLang === 'quechua' ? 'Uyarinapaq' : 'Audios'} ({visibleAudios.length})
             </span>
           </button>
         </div>

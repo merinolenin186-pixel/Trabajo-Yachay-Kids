@@ -129,43 +129,57 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({
   const renderCardIllustration = (iconName: string) => {
     switch (iconName) {
       case 'llama':
-        return <LlamaIllustration className="w-12 h-12" />;
+        return <LlamaIllustration className="w-9 h-9 sm:w-12 sm:h-12" />;
       case 'condor':
-        return <CondorIllustration className="w-12 h-12" />;
+        return <CondorIllustration className="w-9 h-9 sm:w-12 sm:h-12" />;
       case 'cuy':
-        return <CuyIllustration className="w-12 h-12" />;
+        return <CuyIllustration className="w-9 h-9 sm:w-12 sm:h-12" />;
       case 'sun':
-        return <SunIllustration className="w-12 h-12" />;
+        return <SunIllustration className="w-9 h-9 sm:w-12 sm:h-12" />;
       case 'potato':
-        return <PotatoIllustration className="w-12 h-12" />;
+        return <PotatoIllustration className="w-9 h-9 sm:w-12 sm:h-12" />;
       case 'corn':
-        return <CornIllustration className="w-12 h-12" />;
+        return <CornIllustration className="w-9 h-9 sm:w-12 sm:h-12" />;
       case 'palette-red':
-        return <span className="text-4xl">🔴</span>;
+        return <span className="text-3xl sm:text-4xl">🔴</span>;
       case 'palette-blue':
-        return <span className="text-4xl">🔵</span>;
+        return <span className="text-3xl sm:text-4xl">🔵</span>;
       case 'moon':
-        return <span className="text-4xl">🌙</span>;
+        return <span className="text-3xl sm:text-4xl">🌙</span>;
       case 'dog':
       default:
-        return <span className="text-4xl">🐕</span>;
+        return <span className="text-3xl sm:text-4xl">🐕</span>;
     }
   };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-        <button
-          onClick={onBackToHub}
-          className="flex items-center gap-2 text-sm font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 transition"
-        >
-          <ChevronLeft className="w-5 h-5" />
-          <span>{appLang === 'quechua' ? 'Kutiy pukllaykunaman' : 'Volver a juegos'}</span>
-        </button>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-between gap-2">
+          <button
+            onClick={onBackToHub}
+            className="flex items-center gap-2 min-h-[40px] text-sm font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 transition cursor-pointer"
+          >
+            <ChevronLeft className="w-5 h-5 shrink-0" />
+            <span>{appLang === 'quechua' ? 'Kutiy pukllaykunaman' : 'Volver a juegos'}</span>
+          </button>
+
+          {/* Reset button mobile */}
+          <button
+            onClick={() => {
+              audioService.playPop();
+              initGame();
+            }}
+            className="sm:hidden flex items-center gap-1.5 px-3 py-2 min-h-[38px] rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
+          >
+            <RotateCcw className="w-4 h-4" />
+            <span>{appLang === 'quechua' ? 'Waqmanta' : 'Reiniciar'}</span>
+          </button>
+        </div>
 
         {/* Difficulty Selector */}
-        <div className="flex items-center gap-1.5 p-1 bg-amber-50 dark:bg-slate-900 rounded-xl border border-amber-200 dark:border-slate-700">
+        <div className="grid grid-cols-3 sm:flex items-center gap-1 p-1 bg-amber-50 dark:bg-slate-900 rounded-xl border border-amber-200 dark:border-slate-700 w-full sm:w-auto">
           {(['easy', 'medium', 'hard'] as Difficulty[]).map(d => (
             <button
               key={d}
@@ -173,28 +187,28 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({
                 audioService.playPop();
                 setDifficulty(d);
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+              className={`px-2 sm:px-3 py-2 min-h-[38px] rounded-lg text-[11px] sm:text-xs font-bold transition whitespace-nowrap cursor-pointer ${
                 difficulty === d
                   ? 'bg-amber-500 text-white shadow-sm'
                   : 'text-slate-600 dark:text-slate-300 hover:text-amber-600'
               }`}
             >
               {d === 'easy'
-                ? appLang === 'quechua' ? 'Ch\'isi (Fácil - 4)' : 'Fácil (4)'
+                ? 'Fácil (4)'
                 : d === 'medium'
-                ? appLang === 'quechua' ? 'Chawpi (Medio - 6)' : 'Medio (6)'
-                : appLang === 'quechua' ? 'Sasachakuy (Difícil - 8)' : 'Difícil (8)'}
+                ? 'Medio (6)'
+                : 'Difícil (8)'}
             </button>
           ))}
         </div>
 
-        {/* Reset button */}
+        {/* Reset button desktop */}
         <button
           onClick={() => {
             audioService.playPop();
             initGame();
           }}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 transition"
+          className="hidden sm:flex items-center gap-2 px-3 py-2 min-h-[38px] rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
         >
           <RotateCcw className="w-4 h-4" />
           <span>{appLang === 'quechua' ? 'Waqmanta' : 'Reiniciar'}</span>
@@ -215,12 +229,10 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({
 
       {/* Cards Grid */}
       <div
-        className={`grid gap-3 sm:gap-4 ${
+        className={`grid gap-2.5 sm:gap-4 ${
           difficulty === 'easy'
             ? 'grid-cols-2 sm:grid-cols-4'
-            : difficulty === 'medium'
-            ? 'grid-cols-3 sm:grid-cols-4'
-            : 'grid-cols-4'
+            : 'grid-cols-3 sm:grid-cols-4'
         }`}
       >
         {cards.map((card, index) => {
@@ -232,7 +244,7 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({
             <button
               key={card.id}
               onClick={() => handleCardClick(index)}
-              className={`relative h-32 sm:h-36 rounded-2xl font-bold flex flex-col items-center justify-center p-3 transition-all duration-300 transform active:scale-95 shadow-sm ${
+              className={`relative h-28 sm:h-36 rounded-2xl font-bold flex flex-col items-center justify-center p-2 sm:p-3 transition-all duration-300 transform active:scale-95 shadow-sm overflow-hidden cursor-pointer ${
                 isFlipped
                   ? isMatched
                     ? 'bg-emerald-50 dark:bg-emerald-950/60 border-2 border-emerald-500 scale-95'
@@ -241,19 +253,19 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({
               }`}
             >
               {isFlipped ? (
-                <div className="flex flex-col items-center justify-center space-y-1">
+                <div className="flex flex-col items-center justify-center space-y-0.5 sm:space-y-1 w-full min-w-0">
                   {renderCardIllustration(card.iconName)}
-                  <span className="text-sm font-extrabold text-slate-900 dark:text-white font-['Fredoka'] mt-1">
+                  <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white font-['Fredoka'] mt-1 truncate max-w-full px-0.5">
                     {card.title.quechua}
                   </span>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-full px-0.5">
                     {card.title.spanish}
                   </span>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center space-y-1">
-                  <span className="text-3xl">✨</span>
-                  <span className="text-xs font-bold opacity-80 font-['Fredoka']">Yachay</span>
+                  <span className="text-2xl sm:text-3xl">✨</span>
+                  <span className="text-[11px] sm:text-xs font-bold opacity-85 font-['Fredoka']">Yachay</span>
                 </div>
               )}
             </button>

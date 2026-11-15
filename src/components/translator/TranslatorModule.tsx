@@ -172,15 +172,15 @@ export const TranslatorModule: React.FC<TranslatorModuleProps> = ({
   });
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-5 sm:space-y-6">
       {/* Header Banner */}
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="min-w-0">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-xs font-bold mb-2">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Traductor Offline · Diccionario Local Verificado</span>
+            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            <span>Traductor Offline · Diccionario Local</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white font-['Fredoka']">
+          <h2 className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white font-['Fredoka']">
             {appLang === 'quechua'
               ? 'Runasimi ⇄ Castellano Tijraq'
               : 'Traductor Quechua ⇄ Español'}
@@ -201,10 +201,10 @@ export const TranslatorModule: React.FC<TranslatorModuleProps> = ({
         {/* Direction Switcher Button */}
         <button
           onClick={handleSwapLanguages}
-          className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm shadow-md active:scale-95 transition whitespace-nowrap shrink-0 self-start sm:self-auto"
+          className="w-full sm:w-auto flex items-center justify-center gap-3 px-4 py-3 min-h-[44px] rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm shadow-md active:scale-95 transition whitespace-nowrap shrink-0 cursor-pointer"
         >
           <span>{fromLang === 'es' ? 'Español' : 'Quechua'}</span>
-          <ArrowLeftRight className="w-4 h-4" />
+          <ArrowLeftRight className="w-4 h-4 shrink-0" />
           <span>{fromLang === 'es' ? 'Quechua' : 'Español'}</span>
         </button>
       </div>
@@ -212,7 +212,7 @@ export const TranslatorModule: React.FC<TranslatorModuleProps> = ({
       {/* Translator Translation Box Split */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* INPUT BOX */}
-        <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 border-2 border-slate-200 dark:border-slate-700 focus-within:border-amber-400 shadow-sm flex flex-col justify-between space-y-4">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-4 sm:p-5 border-2 border-slate-200 dark:border-slate-700 focus-within:border-amber-400 shadow-sm flex flex-col justify-between space-y-4">
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">

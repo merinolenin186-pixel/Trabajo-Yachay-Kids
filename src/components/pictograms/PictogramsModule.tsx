@@ -285,11 +285,11 @@ export const PictogramsModule: React.FC<PictogramsModuleProps> = ({
         </div>
       </div>
 
-      {/* Pictograms Grid (Adapts density & details to User Level) */}
+      {/* Pictograms Grid (Adapts density & details cleanly on phones and desktop) */}
       <div
-        className={`grid gap-4 ${
+        className={`grid gap-3 sm:gap-4 ${
           cardScale === 'large'
-            ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+            ? 'grid-cols-2 lg:grid-cols-3'
             : cardScale === 'compact'
             ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'
             : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
@@ -298,8 +298,8 @@ export const PictogramsModule: React.FC<PictogramsModuleProps> = ({
         {filteredItems.map(item => (
           <div
             key={item.id}
-            className={`group relative bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-500 shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col items-center text-center justify-between ${
-              cardScale === 'large' ? 'p-6 sm:p-7' : 'p-5'
+            className={`group relative bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-500 shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col items-center text-center justify-between ${
+              cardScale === 'large' ? 'p-3.5 sm:p-6' : 'p-3 sm:p-5'
             }`}
           >
             {/* Expand trigger */}
@@ -309,8 +309,9 @@ export const PictogramsModule: React.FC<PictogramsModuleProps> = ({
                 setFullscreenItem(item);
                 playQuechua(item);
               }}
-              className="absolute top-3 right-3 p-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-400 hover:text-amber-600 transition"
+              className="absolute top-2.5 right-2.5 p-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-amber-600 transition cursor-pointer"
               title="Ver tarjeta grande"
+              aria-label={`Ampliar ${item.name.spanish}`}
             >
               <Maximize2 className="w-3.5 h-3.5" />
             </button>
@@ -318,35 +319,35 @@ export const PictogramsModule: React.FC<PictogramsModuleProps> = ({
             {/* Illustration */}
             <div
               onClick={() => playQuechua(item)}
-              className={`flex items-center justify-center my-2 cursor-pointer group-hover:scale-105 transition-transform ${
-                cardScale === 'large' ? 'w-28 h-28' : 'w-24 h-24'
+              className={`flex items-center justify-center my-1.5 sm:my-2 cursor-pointer group-hover:scale-105 transition-transform ${
+                cardScale === 'large' ? 'w-20 h-20 sm:w-28 sm:h-28' : 'w-16 h-16 sm:w-24 sm:h-24'
               }`}
             >
               {renderPictogramDrawing(
                 item.svgDrawing,
-                cardScale === 'large' ? 'w-24 h-24' : 'w-20 h-20'
+                cardScale === 'large' ? 'w-16 h-16 sm:w-24 sm:h-24' : 'w-14 h-14 sm:w-20 sm:h-20'
               )}
             </div>
 
             {/* Titles & Syllables */}
-            <div className="w-full my-2">
+            <div className="w-full my-1.5 sm:my-2 min-w-0">
               <h3
-                className={`font-extrabold text-slate-900 dark:text-white font-['Fredoka'] ${
-                  cardScale === 'large' ? 'text-2xl' : 'text-xl'
+                className={`font-extrabold text-slate-900 dark:text-white font-['Fredoka'] truncate ${
+                  cardScale === 'large' ? 'text-lg sm:text-2xl' : 'text-base sm:text-xl'
                 }`}
               >
                 {item.name.quechua}
               </h3>
-              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                 {item.name.spanish}
               </p>
               {showPhonetics && item.syllables && (
-                <span className="text-[11px] font-mono text-amber-700 dark:text-amber-400 block mt-1">
+                <span className="text-[11px] font-mono text-amber-700 dark:text-amber-400 block mt-1 truncate">
                   [{item.syllables}]
                 </span>
               )}
               {showDialectNotes && item.name.dialectNotes && (
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-1">
+                <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 block mt-1 line-clamp-2">
                   Chanka: {item.name.dialectNotes.chanka || item.name.quechua} · Collao:{' '}
                   {item.name.dialectNotes.collao || item.name.quechua}
                 </span>
@@ -354,22 +355,22 @@ export const PictogramsModule: React.FC<PictogramsModuleProps> = ({
             </div>
 
             {/* Dual Audio Buttons */}
-            <div className="flex items-center gap-2 mt-2 w-full pt-2 border-t border-slate-100 dark:border-slate-700/60">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 mt-2 w-full pt-2 border-t border-slate-100 dark:border-slate-700/60">
               <button
                 onClick={() => playQuechua(item)}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm active:scale-95 transition"
+                className="flex items-center justify-center gap-1.5 py-2 min-h-[38px] px-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm active:scale-95 transition cursor-pointer"
                 title="Pronunciación en quechua"
               >
-                <Volume2 className="w-3.5 h-3.5" />
+                <Volume2 className="w-3.5 h-3.5 shrink-0" />
                 <span>Quechua</span>
               </button>
 
               <button
                 onClick={() => playSpanish(item)}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold text-xs active:scale-95 transition"
+                className="flex items-center justify-center gap-1.5 py-2 min-h-[38px] px-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold text-xs active:scale-95 transition cursor-pointer"
                 title="Pronunciación en español"
               >
-                <Volume2 className="w-3.5 h-3.5 text-slate-500" />
+                <Volume2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                 <span>Español</span>
               </button>
             </div>

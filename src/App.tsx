@@ -145,7 +145,7 @@ function AppContent() {
   }
 
   return (
-    <div className="yachay-app-shell min-h-screen bg-amber-50/50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-['Fredoka'] antialiased selection:bg-amber-500 selection:text-white pb-20 md:pb-10">
+    <div className="yachay-app-shell min-h-screen overflow-x-clip bg-amber-50/50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-['Fredoka'] antialiased selection:bg-amber-500 selection:text-white pb-24 md:pb-10">
       {/* Universal Accessibility Toolbar */}
       {hiddenOptions.showAccessibilityBar && (
         <AccessibilityBar
@@ -167,18 +167,18 @@ function AppContent() {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+      <main className="flex-1 max-w-7xl w-full min-w-0 mx-auto px-3 sm:px-6 py-4 sm:py-6">
         {/* Banner with Offline Indicator & Non-verbal CAA */}
         {(hiddenOptions.showOfflineBadge || hiddenOptions.showCaaButton) &&
           currentTab !== 'admin' && (
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-2 text-xs">
               {hiddenOptions.showOfflineBadge ? (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-300 dark:border-emerald-700">
-                  <WifiOff className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-300 dark:border-emerald-700 text-[11px] sm:text-xs">
+                  <WifiOff className="w-3.5 h-3.5 shrink-0" />
                   <span>
                     {appLang === 'quechua'
                       ? 'Mana internetwan purin (100% Offline)'
-                      : 'Modo 100% Sin Conexión Activado'}
+                      : 'Modo 100% Sin Conexión'}
                   </span>
                 </div>
               ) : (
@@ -192,10 +192,10 @@ function AppContent() {
                       audioService.playPop();
                       setIsCaaModalOpen(true);
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-sm active:scale-95 transition cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-2 min-h-[38px] rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs shadow-sm active:scale-95 transition cursor-pointer"
                     title="Tablero de comunicación para personas no verbales"
                   >
-                    <MessageSquare className="w-3.5 h-3.5" />
+                    <MessageSquare className="w-3.5 h-3.5 shrink-0" />
                     <span>Tablero Habla</span>
                   </button>
                 </div>

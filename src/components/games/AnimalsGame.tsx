@@ -88,56 +88,56 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-5 sm:space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
         <button
           onClick={onBackToHub}
-          className="flex items-center gap-2 text-sm font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 transition"
+          className="flex items-center gap-2 min-h-[40px] text-sm font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 transition cursor-pointer"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-5 h-5 shrink-0" />
           <span>{appLang === 'quechua' ? 'Kutiy pukllaykunaman' : 'Volver a juegos'}</span>
         </button>
 
         {/* Tab switch */}
-        <div className="flex items-center gap-1.5 p-1 bg-amber-50 dark:bg-slate-900 rounded-xl border border-amber-200 dark:border-slate-700">
+        <div className="grid grid-cols-2 sm:flex items-center gap-1 p-1 bg-amber-50 dark:bg-slate-900 rounded-xl border border-amber-200 dark:border-slate-700 w-full sm:w-auto">
           <button
             onClick={() => {
               audioService.playPop();
               setActiveTab('cards');
             }}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
+            className={`px-3 sm:px-4 py-2 min-h-[40px] rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
               activeTab === 'cards'
                 ? 'bg-amber-500 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-300 hover:text-amber-600'
             }`}
           >
-            {appLang === 'quechua' ? '1. Uywakuna (Aprender)' : '1. Aprender Animales'}
+            {appLang === 'quechua' ? '1. Uywakuna' : '1. Aprender Animales'}
           </button>
           <button
             onClick={() => {
               audioService.playPop();
               setActiveTab('trivia');
             }}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
+            className={`px-3 sm:px-4 py-2 min-h-[40px] rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
               activeTab === 'trivia'
                 ? 'bg-amber-500 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-300 hover:text-amber-600'
             }`}
           >
-            {appLang === 'quechua' ? '2. Tapukuy (Trivia)' : '2. Preguntas y Trivia'}
+            {appLang === 'quechua' ? '2. Tapukuy' : '2. Preguntas y Trivia'}
           </button>
         </div>
       </div>
 
       {activeTab === 'cards' ? (
         /* EXPLORE MODE */
-        <div className="space-y-6">
+        <div className="space-y-5 sm:space-y-6">
           {/* Spotlight Animal */}
-          <div className="bg-gradient-to-b from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-900 rounded-3xl p-6 sm:p-8 shadow-sm border-2 border-amber-300 dark:border-amber-700 text-center">
+          <div className="bg-gradient-to-b from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-900 rounded-3xl p-4 sm:p-8 shadow-sm border-2 border-amber-300 dark:border-amber-700 text-center">
             <div className="flex flex-col items-center">
               <div className="p-4 rounded-3xl bg-white dark:bg-slate-800 shadow-sm border border-amber-200 dark:border-slate-700 mb-4 animate-bounce-gentle">
-                {renderAnimalIllustration(selectedAnimal.iconName, 'w-28 h-28')}
+                {renderAnimalIllustration(selectedAnimal.iconName, 'w-24 h-24 sm:w-28 sm:h-28')}
               </div>
 
               <div className="flex items-center gap-3">
@@ -204,14 +204,14 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
           </div>
 
           {/* Animal Selector Grid */}
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-4">
+          <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-3xl border border-slate-200 dark:border-slate-700">
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-3 sm:mb-4">
               {appLang === 'quechua' ? 'Uywakunata akllay:' : 'Selecciona un animal para conocerlo:'}
             </span>
 
             <div
-              className={`grid gap-3 ${
-                cardScale === 'large' ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'
+              className={`grid gap-2.5 sm:gap-3 grid-cols-2 ${
+                cardScale === 'large' ? 'sm:grid-cols-2' : 'sm:grid-cols-3'
               }`}
             >
               {ANIMALS_DATA.map(ani => {
@@ -224,16 +224,16 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
                       setSelectedAnimal(ani);
                       playAnimalAudio(ani);
                     }}
-                    className={`p-3 rounded-2xl border-2 flex items-center gap-3 transition active:scale-95 ${
+                    className={`p-2.5 sm:p-3 rounded-2xl border-2 flex items-center gap-2.5 sm:gap-3 min-h-[56px] transition active:scale-95 cursor-pointer ${
                       isCur
                         ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/40 shadow-sm'
                         : 'border-slate-200 dark:border-slate-700 hover:border-amber-300 bg-white dark:bg-slate-800'
                     }`}
                   >
-                    <div className="w-12 h-12 flex items-center justify-center shrink-0">
-                      {renderAnimalIllustration(ani.iconName, 'w-10 h-10')}
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center shrink-0">
+                      {renderAnimalIllustration(ani.iconName, 'w-9 h-9 sm:w-10 sm:h-10')}
                     </div>
-                    <div className="text-left overflow-hidden">
+                    <div className="text-left overflow-hidden min-w-0">
                       <span className="block text-sm font-bold text-slate-900 dark:text-white font-['Fredoka'] truncate">
                         {ani.name.quechua}
                       </span>
@@ -249,7 +249,7 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
         </div>
       ) : (
         /* TRIVIA MODE */
-        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 text-center space-y-6">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-4 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 text-center space-y-5 sm:space-y-6">
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
               {appLang === 'quechua' ? `Puntos: ${triviaScore}` : `Aciertos: ${triviaScore}`}

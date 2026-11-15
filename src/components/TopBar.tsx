@@ -43,29 +43,29 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   return (
     <header className="yachay-topbar sticky top-0 z-40 w-full bg-amber-500/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-amber-600/30 dark:border-slate-800 text-white shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-6">
+      <div className="max-w-7xl mx-auto px-2.5 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
         {/* Zone 1: Brand Wordmark */}
         <div
           onClick={() => onSelectTab(visibleNavItems[0]?.id || 'games')}
-          className="flex items-center gap-2.5 cursor-pointer whitespace-nowrap shrink-0 group"
+          className="flex items-center gap-2 cursor-pointer whitespace-nowrap min-w-0 shrink group"
           role="button"
           tabIndex={0}
         >
-          <span className="w-9 h-9 rounded-2xl bg-amber-400 text-amber-950 flex items-center justify-center font-bold text-xl shadow-inner group-hover:scale-105 transition-transform">
+          <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-amber-400 text-amber-950 flex items-center justify-center font-bold text-lg sm:text-xl shadow-inner group-hover:scale-105 transition-transform shrink-0">
             ☀️
           </span>
-          <span className="text-xl md:text-2xl font-extrabold tracking-tight text-white drop-shadow-sm font-['Fredoka']">
+          <span className="text-base sm:text-xl md:text-2xl font-extrabold tracking-tight text-white drop-shadow-sm font-['Fredoka'] truncate">
             {customTexts.appName || 'Yachay Kids'}
           </span>
           {hiddenOptions.showOfflineBadge && (
-            <span className="hidden sm:inline text-xs font-semibold px-2 py-0.5 rounded-full bg-black/20 text-white/95 border border-white/25">
+            <span className="hidden lg:inline text-xs font-semibold px-2 py-0.5 rounded-full bg-black/20 text-white/95 border border-white/25 shrink-0">
               100% Offline
             </span>
           )}
         </div>
 
         {/* Zone 2: Navigation links */}
-        <nav className="hidden md:flex items-center gap-5 text-sm font-medium">
+        <nav className="hidden md:flex items-center gap-4 lg:gap-5 text-sm font-medium">
           {visibleNavItems.map(item => (
             <button
               key={item.id}
@@ -96,7 +96,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         </nav>
 
         {/* Zone 3: Language Switcher & Audio Button */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {isAuthenticated && (
             <button
               onClick={() => onSelectTab('admin')}
@@ -124,8 +124,8 @@ export const TopBar: React.FC<TopBarProps> = ({
               audioService.playPop();
               onOpenProfileModal();
             }}
-            className="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-xl bg-black/20 hover:bg-black/30 text-white font-bold text-xs transition active:scale-95 whitespace-nowrap shrink-0 cursor-pointer"
-            title="Ver perfil y nivel del niño"
+            className="flex items-center gap-1.5 pl-1 pr-2 sm:pl-1.5 sm:pr-3 py-1 min-h-[40px] rounded-xl bg-black/20 hover:bg-black/30 text-white font-bold text-xs transition active:scale-95 whitespace-nowrap shrink-0 cursor-pointer"
+            title="Ver perfil del niño"
           >
             <img
               src={profile.avatarImage}
@@ -133,7 +133,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               referrerPolicy="no-referrer"
               className="w-7 h-7 rounded-lg object-cover border border-white/60 shrink-0"
             />
-            <span className="max-w-[84px] truncate">{profile.name}</span>
+            <span className="max-w-[54px] sm:max-w-[84px] truncate">{profile.name}</span>
           </button>
 
           <button
@@ -141,11 +141,18 @@ export const TopBar: React.FC<TopBarProps> = ({
               audioService.playPop();
               onOpenLanguageModal();
             }}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white text-amber-900 font-bold text-xs sm:text-sm hover:bg-amber-50 active:scale-95 shadow transition whitespace-nowrap shrink-0 cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 min-h-[40px] rounded-xl bg-white text-amber-900 font-bold text-xs sm:text-sm hover:bg-amber-50 active:scale-95 shadow transition whitespace-nowrap shrink-0 cursor-pointer"
+            aria-label="Cambiar idioma"
           >
-            <Globe className="w-4 h-4 text-amber-600" />
+            <Globe className="w-4 h-4 text-amber-600 shrink-0" />
             <span>
-              {appLang === 'quechua' ? `Quechua (${dialect})` : 'Español'}
+              {appLang === 'quechua' ? (
+                <>
+                  Quechua<span className="hidden sm:inline"> ({dialect})</span>
+                </>
+              ) : (
+                'Español'
+              )}
             </span>
           </button>
         </div>

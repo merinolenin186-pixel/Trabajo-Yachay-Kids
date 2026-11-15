@@ -91,53 +91,53 @@ export const FoodsGame: React.FC<FoodsGameProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-5 sm:space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
         <button
           onClick={onBackToHub}
-          className="flex items-center gap-2 text-sm font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 transition"
+          className="flex items-center gap-2 min-h-[40px] text-sm font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 transition cursor-pointer"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-5 h-5 shrink-0" />
           <span>{appLang === 'quechua' ? 'Kutiy pukllaykunaman' : 'Volver a juegos'}</span>
         </button>
 
         {/* Tab switch */}
-        <div className="flex items-center gap-1.5 p-1 bg-amber-50 dark:bg-slate-900 rounded-xl border border-amber-200 dark:border-slate-700">
+        <div className="grid grid-cols-2 sm:flex items-center gap-1 p-1 bg-amber-50 dark:bg-slate-900 rounded-xl border border-amber-200 dark:border-slate-700 w-full sm:w-auto">
           <button
             onClick={() => {
               audioService.playPop();
               setActiveTab('learn');
             }}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
+            className={`px-3 sm:px-4 py-2 min-h-[40px] rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
               activeTab === 'learn'
                 ? 'bg-amber-500 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-300 hover:text-amber-600'
             }`}
           >
-            {appLang === 'quechua' ? '1. Mikhunakuna (Aprender)' : '1. Conocer Alimentos'}
+            {appLang === 'quechua' ? '1. Mikhunakuna' : '1. Conocer Alimentos'}
           </button>
           <button
             onClick={() => {
               audioService.playPop();
               setActiveTab('basket');
             }}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
+            className={`px-3 sm:px-4 py-2 min-h-[40px] rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
               activeTab === 'basket'
                 ? 'bg-amber-500 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-300 hover:text-amber-600'
             }`}
           >
-            {appLang === 'quechua' ? '2. Canastacha (Canasta)' : '2. Juego de la Canasta'}
+            {appLang === 'quechua' ? '2. Canastacha' : '2. Juego de Canasta'}
           </button>
         </div>
       </div>
 
       {activeTab === 'learn' ? (
         /* EXPLORE MODE */
-        <div className="space-y-6">
+        <div className="space-y-5 sm:space-y-6">
           {/* Spotlight Food */}
-          <div className="bg-gradient-to-b from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-900 rounded-3xl p-6 sm:p-8 shadow-sm border-2 border-amber-300 dark:border-amber-700 text-center">
+          <div className="bg-gradient-to-b from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-900 rounded-3xl p-4 sm:p-8 shadow-sm border-2 border-amber-300 dark:border-amber-700 text-center">
             <div className="flex flex-col items-center">
               <div className="p-4 rounded-3xl bg-white dark:bg-slate-800 shadow-sm border border-amber-200 dark:border-slate-700 mb-4 animate-bounce-gentle">
                 {renderFoodIcon(selectedFood.iconName, 'w-24 h-24')}
@@ -201,14 +201,14 @@ export const FoodsGame: React.FC<FoodsGameProps> = ({
           </div>
 
           {/* Grid selector */}
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-4">
+          <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-3xl border border-slate-200 dark:border-slate-700">
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-3 sm:mb-4">
               {appLang === 'quechua' ? 'Mikhunata akllay:' : 'Selecciona un alimento para conocerlo:'}
             </span>
 
             <div
-              className={`grid gap-3 ${
-                cardScale === 'large' ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'
+              className={`grid gap-2.5 sm:gap-3 grid-cols-2 ${
+                cardScale === 'large' ? 'sm:grid-cols-3' : 'sm:grid-cols-4'
               }`}
             >
               {FOODS_DATA.map(food => {
@@ -221,7 +221,7 @@ export const FoodsGame: React.FC<FoodsGameProps> = ({
                       setSelectedFood(food);
                       playFoodAudio(food);
                     }}
-                    className={`p-3 rounded-2xl border-2 flex items-center gap-3 transition active:scale-95 ${
+                    className={`p-2.5 sm:p-3 rounded-2xl border-2 flex items-center gap-2.5 sm:gap-3 min-h-[54px] transition active:scale-95 cursor-pointer ${
                       isCur
                         ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/40 shadow-sm'
                         : 'border-slate-200 dark:border-slate-700 hover:border-amber-300 bg-white dark:bg-slate-800'
@@ -230,7 +230,7 @@ export const FoodsGame: React.FC<FoodsGameProps> = ({
                     <div className="w-10 h-10 flex items-center justify-center shrink-0">
                       {renderFoodIcon(food.iconName, 'w-8 h-8')}
                     </div>
-                    <div className="text-left overflow-hidden">
+                    <div className="text-left overflow-hidden min-w-0">
                       <span className="block text-sm font-bold text-slate-900 dark:text-white font-['Fredoka'] truncate">
                         {food.name.quechua}
                       </span>
@@ -246,7 +246,7 @@ export const FoodsGame: React.FC<FoodsGameProps> = ({
         </div>
       ) : (
         /* BASKET GAME MODE */
-        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 text-center space-y-6">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-4 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 text-center space-y-5 sm:space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-bold text-amber-600 dark:text-amber-400">
               <ShoppingBag className="w-5 h-5" />

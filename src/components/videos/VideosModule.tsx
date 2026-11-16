@@ -231,6 +231,13 @@ export const VideosModule: React.FC<VideosModuleProps> = ({
                   audioService.playPop();
                   setSelectedStory(story);
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    audioService.playPop();
+                    setSelectedStory(story);
+                  }
+                }}
                 className="group cursor-pointer bg-white dark:bg-slate-800 rounded-3xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 hover:border-purple-400 dark:hover:border-purple-500 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between"
                 role="button"
                 tabIndex={0}
@@ -239,7 +246,16 @@ export const VideosModule: React.FC<VideosModuleProps> = ({
                   className="relative aspect-video w-full flex items-center justify-center p-6 text-white overflow-hidden"
                   style={{ backgroundColor: story.thumbnailColor }}
                 >
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
+                  {story.videoUrl && (
+                    <video
+                      src={`${story.videoUrl}#t=2`}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-black/25 group-hover:bg-black/15 transition-colors" />
                   <div className="relative z-10 w-16 h-16 rounded-full bg-white/90 text-purple-700 shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Play className="w-7 h-7 fill-purple-700 ml-1" />
                   </div>
@@ -252,7 +268,7 @@ export const VideosModule: React.FC<VideosModuleProps> = ({
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
                     <span className="text-[11px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
-                      {story.category}
+                      {story.category}{story.videoUrl ? ' · Subtítulos Auto' : ''}
                     </span>
 
                     <h3 className="text-lg font-extrabold text-slate-900 dark:text-white font-['Fredoka'] mt-1 group-hover:text-purple-600 transition-colors">
@@ -262,11 +278,19 @@ export const VideosModule: React.FC<VideosModuleProps> = ({
                     <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
                       {story.title.spanish}
                     </p>
+
+                    {story.description && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 line-clamp-2">
+                        {appLang === 'quechua' ? story.description.quechua : story.description.spanish}
+                      </p>
+                    )}
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-xs font-bold text-purple-600 dark:text-purple-400">
                     <span>{appLang === 'quechua' ? 'Qhaway (Reproducir)' : 'Ver video'}</span>
-                    <span className="text-slate-500 dark:text-slate-400 font-medium">Offline</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">
+                      {story.videoUrl ? `${story.scenes.length} subtítulos` : 'Offline'}
+                    </span>
                   </div>
                 </div>
               </div>

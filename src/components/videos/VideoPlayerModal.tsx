@@ -32,7 +32,7 @@ interface VideoPlayerModalProps {
   dialect: QuechuaDialect;
 }
 
-type SubtitleMode = 'auto' | 'both' | 'quechua' | 'spanish';
+type SubtitleMode = 'auto' | 'both' | 'quechua' | 'spanish' | 'off';
 
 export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   story,
@@ -46,21 +46,36 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   const [subtitleMode, setSubtitleMode] = useState<SubtitleMode>('auto');
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
+  const hasVideoFile = Boolean(story.videoUrl);
   const currentScene = story.scenes[currentSceneIdx] || story.scenes[0];
 
-  // Play narration on scene change
+  // Sync playback rate for native MP4 videos
   useEffect(() => {
-    if (!isOpen || !isPlaying) return;
+    if (videoRef.current) {
+      videoRef.current.playbackRate = playbackSpeed;
+    }
+  }, [playbackSpeed, isOpen, story.id]);
 
-    // Speak narration in active app language
+  // Reset scene index when opening a new story
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentSceneIdx(0);
+      setIsPlaying(true);
+    }
+  }, [isOpen, story.id]);
+
+  // Play TTS narration on scene change ONLY for animated SVG stories (no native MP4 audio)
+  useEffect(() => {
+    if (!isOpen || !isPlaying || hasVideoFile) return;
+
     if (appLang === 'quechua') {
       audioService.speakQuechua(currentScene.narrationQuechua, dialect);
     } else {
       audioService.speakSpanish(currentScene.narrationSpanish);
     }
 
-    // Schedule next scene after scene duration (adjusted for playback speed)
     const durationMs = (currentScene.duration * 1000) / playbackSpeed;
     timerRef.current = setTimeout(() => {
       if (currentSceneIdx < story.scenes.length - 1) {
@@ -73,12 +88,27 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [isOpen, currentSceneIdx, isPlaying, playbackSpeed, story, dialect, appLang, currentScene]);
+  }, [isOpen, hasVideoFile, currentSceneIdx, isPlaying, playbackSpeed, story, dialect, appLang, currentScene]);
 
   if (!isOpen) return null;
 
   const handleTogglePlay = () => {
     audioService.playPop();
+    if (hasVideoFile && videoRef.current) {
+      if (videoRef.current.paused || videoRef.current.ended) {
+        if (videoRef.current.ended) {
+          videoRef.current.currentTime = 0;
+          setCurrentSceneIdx(0);
+        }
+        videoRef.current.play().catch(() => {});
+        setIsPlaying(true);
+      } else {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      }
+      return;
+    }
+
     if (isPlaying) {
       setIsPlaying(false);
       audioService.stop();
@@ -96,11 +126,24 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     if (timerRef.current) clearTimeout(timerRef.current);
     setCurrentSceneIdx(0);
     setIsPlaying(true);
+    if (hasVideoFile && videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {});
+    }
+  };
+
+  const handleJumpToScene = (idx: number) => {
+    audioService.playPop();
+    setCurrentSceneIdx(idx);
+    if (hasVideoFile && videoRef.current && story.scenes[idx]) {
+      videoRef.current.currentTime = story.scenes[idx].timestamp;
+    }
   };
 
   const handleClose = () => {
     audioService.playPop();
     audioService.stop();
+    if (videoRef.current) videoRef.current.pause();
     if (timerRef.current) clearTimeout(timerRef.current);
     onClose();
   };
@@ -111,6 +154,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
       if (prev === 'auto') return 'both';
       if (prev === 'both') return 'quechua';
       if (prev === 'quechua') return 'spanish';
+      if (prev === 'spanish') return 'off';
       return 'auto';
     });
   };
@@ -120,20 +164,27 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     setPlaybackSpeed(prev => (prev === 1 ? 0.8 : 1));
   };
 
+  const handleVideoTimeUpdate = (t: number) => {
+    const matchedIdx = story.scenes.findIndex((scene, idx) => {
+      const next = story.scenes[idx + 1];
+      return t >= scene.timestamp && (!next || t < next.timestamp);
+    });
+    if (matchedIdx !== -1 && matchedIdx !== currentSceneIdx) {
+      setCurrentSceneIdx(matchedIdx);
+    }
+  };
+
   // Render animated background stage
   const renderBackground = () => {
     switch (currentScene.backgroundType) {
       case 'andina_night':
         return (
           <div className="absolute inset-0 bg-gradient-to-b from-indigo-950 via-slate-900 to-indigo-900 overflow-hidden">
-            {/* Stars */}
             <div className="absolute top-6 left-12 text-yellow-200 text-sm animate-pulse">✦</div>
             <div className="absolute top-12 left-1/3 text-yellow-100 text-base animate-pulse">★</div>
             <div className="absolute top-8 right-24 text-yellow-200 text-sm animate-pulse">✦</div>
             <div className="absolute top-16 right-1/4 text-yellow-100 text-xs animate-pulse">★</div>
-            {/* Crescent Moon */}
             <div className="absolute top-6 right-8 text-3xl">🌙</div>
-            {/* Dark mountain silhouettes */}
             <svg viewBox="0 0 500 200" className="absolute bottom-0 w-full h-32 preserve-3d" fill="none">
               <polygon points="0,200 80,60 180,200" fill="#1e1b4b" opacity="0.8" />
               <polygon points="120,200 260,30 380,200" fill="#1e1b4b" />
@@ -156,7 +207,6 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
             <div className="absolute top-4 left-6">
               <SunIllustration className="w-14 h-14" />
             </div>
-            {/* Terraces */}
             <div className="absolute bottom-16 w-full h-20 bg-emerald-600 -skew-y-2 opacity-90" />
             <div className="absolute bottom-8 w-full h-20 bg-amber-600 skew-y-1 opacity-90" />
             <div className="absolute bottom-0 w-full h-16 bg-emerald-700" />
@@ -168,7 +218,6 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
             <div className="absolute top-4 right-10">
               <SunIllustration className="w-14 h-14" />
             </div>
-            {/* Adobe houses */}
             <div className="absolute bottom-0 left-6 w-24 h-24 bg-amber-700 rounded-t-lg border-t-4 border-amber-900" />
             <div className="absolute bottom-0 left-36 w-28 h-28 bg-amber-800 rounded-t-lg border-t-4 border-red-900" />
             <div className="absolute bottom-0 right-10 w-24 h-20 bg-amber-700 rounded-t-lg" />
@@ -178,10 +227,8 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
       case 'lake_titicaca':
         return (
           <div className="absolute inset-0 bg-gradient-to-b from-sky-500 via-blue-400 to-cyan-600 overflow-hidden">
-            {/* Water waves */}
             <div className="absolute bottom-0 w-full h-28 bg-blue-600/80" />
             <div className="absolute bottom-0 w-full h-16 bg-blue-700/90" />
-            {/* Distant snowy mountains */}
             <svg viewBox="0 0 500 150" className="absolute bottom-28 w-full h-24" fill="none">
               <polygon points="0,150 120,20 240,150" fill="#cbd5e1" />
               <polygon points="120,20 150,55 90,55" fill="#ffffff" />
@@ -195,13 +242,10 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
       default:
         return (
           <div className="absolute inset-0 bg-gradient-to-b from-sky-400 via-sky-200 to-emerald-200 overflow-hidden">
-            {/* Sun */}
             <div className="absolute top-4 left-6">
               <SunIllustration className="w-16 h-16" />
             </div>
-            {/* White fluffy cloud */}
             <div className="absolute top-8 right-16 w-24 h-10 bg-white/80 rounded-full animate-float-cloud" />
-            {/* Andes Mountains */}
             <svg viewBox="0 0 500 200" className="absolute bottom-0 w-full h-36" fill="none">
               <polygon points="0,200 120,40 240,200" fill="#64748b" />
               <polygon points="120,40 140,80 100,80" fill="#ffffff" />
@@ -253,81 +297,122 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-      <div className="relative w-full max-w-3xl bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-amber-400 flex flex-col">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="relative w-full max-w-3xl max-h-[94dvh] bg-slate-900 rounded-3xl overflow-y-auto shadow-2xl border-2 sm:border-4 border-amber-400 flex flex-col">
         {/* Top Header inside modal */}
-        <div className="p-4 bg-slate-950 flex items-center justify-between text-white border-b border-slate-800">
-          <div className="flex items-center gap-2 overflow-hidden">
-            <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-            <h3 className="text-base sm:text-lg font-bold font-['Fredoka'] truncate">
-              {story.title.quechua} · {story.title.spanish}
-            </h3>
+        <div className="p-3 sm:p-4 bg-slate-950 flex items-center justify-between text-white border-b border-slate-800 gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-lg font-bold font-['Fredoka'] truncate">
+                {story.title.quechua} · {story.title.spanish}
+              </h3>
+              {story.description && (
+                <p className="text-[11px] text-slate-400 truncate hidden sm:block">
+                  {appLang === 'quechua' ? story.description.quechua : story.description.spanish}
+                </p>
+              )}
+            </div>
           </div>
           <button
             onClick={handleClose}
-            className="p-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition shrink-0"
+            className="p-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition shrink-0 cursor-pointer"
+            aria-label="Cerrar video"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Video Theater Screen */}
-        <div className="relative aspect-video w-full bg-black overflow-hidden flex items-end justify-center">
-          {renderBackground()}
+        <div
+          className={`relative w-full bg-black overflow-hidden flex ${
+            hasVideoFile
+              ? 'h-[45dvh] sm:h-auto sm:aspect-video items-center justify-center'
+              : 'aspect-video items-end justify-center'
+          }`}
+        >
+          {hasVideoFile ? (
+            <video
+              ref={videoRef}
+              src={story.videoUrl}
+              controls
+              autoPlay
+              playsInline
+              preload="metadata"
+              className="w-full h-full object-contain bg-black"
+              onLoadedMetadata={(e) => {
+                e.currentTarget.playbackRate = playbackSpeed;
+              }}
+              onTimeUpdate={(e) => handleVideoTimeUpdate(e.currentTarget.currentTime)}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onEnded={() => setIsPlaying(false)}
+            />
+          ) : (
+            <>
+              {renderBackground()}
+              {/* Characters on stage */}
+              <div className="relative z-10 w-full px-4 sm:px-8 pb-3 sm:pb-4 flex items-end justify-around scale-75 sm:scale-100 origin-bottom">
+                {currentScene.characters.map((c, i) => renderCharacter(c, i))}
+              </div>
+            </>
+          )}
 
-          {/* Characters on stage */}
-          <div className="relative z-10 w-full px-4 sm:px-8 pb-3 sm:pb-4 flex items-end justify-around scale-75 sm:scale-100 origin-bottom">
-            {currentScene.characters.map((c, i) => renderCharacter(c, i))}
-          </div>
-
-          {/* Subtitles Overlay */}
-          <div className="absolute top-2 sm:top-3 left-2 sm:left-3 right-2 sm:right-3 z-20">
-            <div className="max-w-xl mx-auto p-2 sm:p-3 rounded-2xl bg-black/75 backdrop-blur-md border border-white/20 text-center shadow-lg transition-all">
-              {subtitleMode === 'auto' ? (
-                appLang === 'quechua' ? (
-                  <>
-                    <p className="text-sm sm:text-lg font-extrabold text-amber-300 font-['Fredoka'] leading-snug">
-                      «{currentScene.subtitlesQuechua}»
-                    </p>
-                    <p className="text-[11px] sm:text-xs text-slate-300 mt-0.5 leading-snug">{currentScene.subtitlesSpanish}</p>
-                  </>
+          {/* Subtitles Overlay (positioned cleanly at top so native video bar at bottom is never blocked) */}
+          {subtitleMode !== 'off' && (
+            <div className="pointer-events-none absolute top-2 sm:top-3 left-2 sm:left-3 right-2 sm:right-3 z-20">
+              <div className="max-w-xl mx-auto px-3 py-1.5 sm:p-3 rounded-2xl bg-black/75 backdrop-blur-md border border-white/20 text-center shadow-lg transition-all">
+                {subtitleMode === 'auto' ? (
+                  appLang === 'quechua' ? (
+                    <>
+                      <p className="text-xs sm:text-base font-extrabold text-amber-300 font-['Fredoka'] leading-snug">
+                        «{currentScene.subtitlesQuechua}»
+                      </p>
+                      <p className="text-[10px] sm:text-xs text-slate-300 mt-0.5 leading-snug">
+                        {currentScene.subtitlesSpanish}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xs sm:text-base font-extrabold text-white font-['Fredoka'] leading-snug">
+                        «{currentScene.subtitlesSpanish}»
+                      </p>
+                      <p className="text-[10px] sm:text-xs text-amber-300 mt-0.5 leading-snug">
+                        {currentScene.subtitlesQuechua}
+                      </p>
+                    </>
+                  )
                 ) : (
                   <>
-                    <p className="text-sm sm:text-lg font-extrabold text-white font-['Fredoka'] leading-snug">
-                      «{currentScene.subtitlesSpanish}»
-                    </p>
-                    <p className="text-[11px] sm:text-xs text-amber-300 mt-0.5 leading-snug">{currentScene.subtitlesQuechua}</p>
+                    {(subtitleMode === 'both' || subtitleMode === 'quechua') && (
+                      <p className="text-xs sm:text-base font-extrabold text-amber-300 font-['Fredoka'] leading-snug">
+                        «{currentScene.subtitlesQuechua}»
+                      </p>
+                    )}
+                    {(subtitleMode === 'both' || subtitleMode === 'spanish') && (
+                      <p className="text-[11px] sm:text-sm font-medium text-slate-200 mt-0.5 leading-snug">
+                        {currentScene.subtitlesSpanish}
+                      </p>
+                    )}
                   </>
-                )
-              ) : (
-                <>
-                  {(subtitleMode === 'both' || subtitleMode === 'quechua') && (
-                    <p className="text-sm sm:text-lg font-extrabold text-amber-300 font-['Fredoka'] leading-snug">
-                      «{currentScene.subtitlesQuechua}»
-                    </p>
-                  )}
-                  {(subtitleMode === 'both' || subtitleMode === 'spanish') && (
-                    <p className="text-xs sm:text-sm font-medium text-slate-200 mt-0.5 leading-snug">
-                      {currentScene.subtitlesSpanish}
-                    </p>
-                  )}
-                </>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Video Controls Toolbar */}
-        <div className="p-3 sm:p-4 bg-slate-950 text-white space-y-3">
+        <div className="p-3 sm:p-4 bg-slate-950 text-white space-y-2.5 sm:space-y-3">
           {/* Timeline progress */}
           <div className="flex items-center gap-1.5 w-full">
-            {story.scenes.map((scene, idx) => (
+            {story.scenes.map((_, idx) => (
               <button
                 key={idx}
-                onClick={() => {
-                  audioService.playPop();
-                  setCurrentSceneIdx(idx);
-                }}
+                onClick={() => handleJumpToScene(idx)}
                 className={`h-2.5 rounded-full flex-1 transition-all cursor-pointer ${
                   idx === currentSceneIdx
                     ? 'bg-amber-400 scale-y-125'
@@ -345,7 +430,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={handleTogglePlay}
-                className="w-11 h-11 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 flex items-center justify-center font-bold shadow-md active:scale-95 transition cursor-pointer"
+                className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 flex items-center justify-center font-bold shadow-md active:scale-95 transition cursor-pointer"
                 aria-label={isPlaying ? 'Pausar' : 'Reproducir'}
               >
                 {isPlaying ? <Pause className="w-5 h-5 fill-slate-950" /> : <Play className="w-5 h-5 fill-slate-950 ml-0.5" />}
@@ -360,9 +445,18 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
               </button>
 
               <button
-                onClick={() => audioService.speakQuechua(currentScene.narrationQuechua, dialect)}
+                onClick={() => {
+                  if (hasVideoFile && videoRef.current && !videoRef.current.paused) {
+                    videoRef.current.pause();
+                  }
+                  if (appLang === 'quechua') {
+                    audioService.speakQuechua(currentScene.subtitlesQuechua, dialect);
+                  } else {
+                    audioService.speakSpanish(currentScene.subtitlesSpanish);
+                  }
+                }}
                 className="w-10 h-10 rounded-2xl bg-slate-800 hover:bg-slate-700 text-amber-400 flex items-center justify-center transition cursor-pointer"
-                title="Repetir audio en quechua"
+                title="Escuchar subtítulo en voz alta"
               >
                 <Volume2 className="w-4 h-4" />
               </button>
@@ -382,7 +476,9 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
                     ? 'Bilingüe'
                     : subtitleMode === 'quechua'
                     ? 'Quechua'
-                    : 'Español'}
+                    : subtitleMode === 'spanish'
+                    ? 'Español'
+                    : 'Sin subtítulos'}
                 </span>
               </button>
 

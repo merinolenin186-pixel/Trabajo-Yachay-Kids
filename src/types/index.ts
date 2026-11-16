@@ -120,6 +120,7 @@ export interface TranslationHistoryItem {
 export interface VideoStory {
   id: string;
   title: BilingualText;
+  description?: BilingualText;
   category:
     | 'numeros'
     | 'animales'
@@ -133,6 +134,7 @@ export interface VideoStory {
   durationSeconds: number;
   thumbnailColor: string;
   icon: string;
+  videoUrl?: string;
   scenes: VideoScene[];
 }
 

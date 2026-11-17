@@ -21,9 +21,47 @@ import {
   PotatoIllustration,
   CornIllustration,
   RainbowIllustration,
-  ChaskiBoyIllustration,
   PachaGirlIllustration,
 } from '../icons/AppIllustrations';
+import {
+  DogIllustration,
+  CatIllustration,
+  PumaIllustration,
+  QuinuaIllustration,
+  ChunoIllustration,
+  LucumaIllustration,
+  OllucoIllustration,
+  ColorSplashIllustration,
+  NumberPictogramIllustration,
+  MotherIllustration,
+  FatherIllustration,
+  BabyIllustration,
+  GrandmotherIllustration,
+  GrandfatherIllustration,
+  HeadIllustration,
+  EyeIllustration,
+  EarIllustration,
+  MouthIllustration,
+  HandIllustration,
+  FootIllustration,
+  MoonIllustration,
+  StarIllustration,
+  MountainIllustration,
+  RiverIllustration,
+  SchoolIllustration,
+  PencilIllustration,
+  BookIllustration,
+  ChairIllustration,
+  TableIllustration,
+  BackpackIllustration,
+  EmotionIllustration,
+  SleepIllustration,
+  EatIllustration,
+  PlayIllustration,
+  StudyIllustration,
+  DanceIllustration,
+  WashHandsIllustration,
+} from '../icons/PictogramIllustrations';
 
 interface PictogramsModuleProps {
   appLang: AppLanguage;
@@ -89,111 +127,146 @@ export const PictogramsModule: React.FC<PictogramsModuleProps> = ({
 
   const renderPictogramDrawing = (svgDrawing: string, sizeClass = 'w-20 h-20') => {
     switch (svgDrawing) {
+      // Animales
       case 'llama':
         return <LlamaIllustration className={sizeClass} />;
       case 'condor':
         return <CondorIllustration className={sizeClass} />;
+      case 'dog':
+        return <DogIllustration className={sizeClass} />;
+      case 'cat':
+        return <CatIllustration className={sizeClass} />;
       case 'cuy':
         return <CuyIllustration className={sizeClass} />;
+      case 'puma':
+        return <PumaIllustration className={sizeClass} />;
+
+      // Alimentos
       case 'potato':
-      case 'potato-dark':
         return <PotatoIllustration className={sizeClass} />;
+      case 'potato-dark':
+        return <ChunoIllustration className={sizeClass} />;
       case 'corn':
         return <CornIllustration className={sizeClass} />;
-      case 'sun':
-        return <SunIllustration className={sizeClass} />;
-      case 'rainbow':
-        return <RainbowIllustration className={sizeClass} />;
-      case 'father':
-      case 'school':
-        return <ChaskiBoyIllustration className={sizeClass} />;
+      case 'wheat':
+        return <QuinuaIllustration className={sizeClass} />;
+      case 'fruit':
+        return <LucumaIllustration className={sizeClass} />;
+      case 'olluco':
+        return <OllucoIllustration className={sizeClass} />;
+
+      // Colores
+      case 'color-red':
+        return <ColorSplashIllustration color="#ef4444" border="#b91c1c" className={sizeClass} />;
+      case 'color-green':
+        return <ColorSplashIllustration color="#10b981" border="#047857" className={sizeClass} />;
+      case 'color-blue':
+        return <ColorSplashIllustration color="#0284c7" border="#0369a1" className={sizeClass} />;
+      case 'color-yellow':
+        return <ColorSplashIllustration color="#facc15" border="#ca8a04" className={sizeClass} />;
+      case 'color-white':
+        return <ColorSplashIllustration color="#f8fafc" border="#94a3b8" className={sizeClass} />;
+      case 'color-black':
+        return <ColorSplashIllustration color="#1e293b" border="#020617" className={sizeClass} />;
+
+      // Números
+      case 'num-1':
+        return <NumberPictogramIllustration num={1} color="#0284c7" className={sizeClass} />;
+      case 'num-2':
+        return <NumberPictogramIllustration num={2} color="#10b981" className={sizeClass} />;
+      case 'num-3':
+        return <NumberPictogramIllustration num={3} color="#f59e0b" className={sizeClass} />;
+      case 'num-4':
+        return <NumberPictogramIllustration num={4} color="#ec4899" className={sizeClass} />;
+      case 'num-5':
+        return <NumberPictogramIllustration num={5} color="#8b5cf6" className={sizeClass} />;
+      case 'num-10':
+        return <NumberPictogramIllustration num={10} color="#d97706" className={sizeClass} />;
+
+      // Familia
       case 'mother':
+        return <MotherIllustration className={sizeClass} />;
+      case 'father':
+        return <FatherIllustration className={sizeClass} />;
+      case 'baby':
+        return <BabyIllustration className={sizeClass} />;
+      case 'grandmother':
+        return <GrandmotherIllustration className={sizeClass} />;
+      case 'grandfather':
+        return <GrandfatherIllustration className={sizeClass} />;
       case 'sister':
         return <PachaGirlIllustration className={sizeClass} />;
-      case 'color-red':
-        return <div className="w-16 h-16 rounded-full bg-red-500 shadow-md border-4 border-white" />;
-      case 'color-green':
-        return <div className="w-16 h-16 rounded-full bg-emerald-500 shadow-md border-4 border-white" />;
-      case 'color-blue':
-        return <div className="w-16 h-16 rounded-full bg-sky-500 shadow-md border-4 border-white" />;
-      case 'color-yellow':
-        return <div className="w-16 h-16 rounded-full bg-amber-400 shadow-md border-4 border-white" />;
-      case 'color-white':
-        return <div className="w-16 h-16 rounded-full bg-slate-100 shadow-md border-4 border-slate-300" />;
-      case 'color-black':
-        return <div className="w-16 h-16 rounded-full bg-slate-900 shadow-md border-4 border-slate-700" />;
-      case 'num-1':
-        return <span className="text-6xl font-black text-sky-600 font-['Fredoka']">1</span>;
-      case 'num-2':
-        return <span className="text-6xl font-black text-emerald-600 font-['Fredoka']">2</span>;
-      case 'num-3':
-        return <span className="text-6xl font-black text-amber-600 font-['Fredoka']">3</span>;
-      case 'num-4':
-        return <span className="text-6xl font-black text-pink-600 font-['Fredoka']">4</span>;
-      case 'num-5':
-        return <span className="text-6xl font-black text-purple-600 font-['Fredoka']">5</span>;
-      case 'num-10':
-        return <span className="text-6xl font-black text-orange-600 font-['Fredoka']">10</span>;
+
+      // Partes del cuerpo
       case 'head':
-        return <span className="text-5xl">👤</span>;
+        return <HeadIllustration className={sizeClass} />;
       case 'eye':
-        return <span className="text-5xl">👀</span>;
+        return <EyeIllustration className={sizeClass} />;
       case 'ear':
-        return <span className="text-5xl">👂</span>;
+        return <EarIllustration className={sizeClass} />;
       case 'mouth':
-        return <span className="text-5xl">👄</span>;
+        return <MouthIllustration className={sizeClass} />;
       case 'hand':
-        return <span className="text-5xl">✋</span>;
+        return <HandIllustration className={sizeClass} />;
       case 'foot':
-        return <span className="text-5xl">🦶</span>;
-      case 'pencil':
-        return <span className="text-5xl">✏️</span>;
-      case 'book':
-        return <span className="text-5xl">📖</span>;
-      case 'chair':
-        return <span className="text-5xl">🪑</span>;
-      case 'table':
-        return <span className="text-5xl">🪵</span>;
-      case 'backpack':
-        return <span className="text-5xl">🎒</span>;
-      case 'smile':
-        return <span className="text-5xl">😄</span>;
-      case 'frown':
-        return <span className="text-5xl">😢</span>;
-      case 'angry':
-        return <span className="text-5xl">😠</span>;
-      case 'surprise':
-        return <span className="text-5xl">😮</span>;
-      case 'calm':
-        return <span className="text-5xl">😌</span>;
-      case 'bed':
-        return <span className="text-5xl">🛏️</span>;
-      case 'utensils':
-        return <span className="text-5xl">🥣</span>;
-      case 'play':
-        return <span className="text-5xl">⚽</span>;
-      case 'study':
-        return <span className="text-5xl">📚</span>;
-      case 'dance':
-        return <span className="text-5xl">💃</span>;
-      case 'wash':
-        return <span className="text-5xl">🧼</span>;
-      case 'star':
-        return <span className="text-5xl">⭐</span>;
+        return <FootIllustration className={sizeClass} />;
+
+      // Naturaleza
+      case 'sun':
+        return <SunIllustration className={sizeClass} />;
       case 'moon':
-        return <span className="text-5xl">🌙</span>;
+        return <MoonIllustration className={sizeClass} />;
+      case 'star':
+        return <StarIllustration className={sizeClass} />;
       case 'mountain':
-        return <span className="text-5xl">🏔️</span>;
+        return <MountainIllustration className={sizeClass} />;
       case 'river':
-        return <span className="text-5xl">🌊</span>;
-      case 'baby':
-        return <span className="text-5xl">👶</span>;
-      case 'grandmother':
-        return <span className="text-5xl">👵</span>;
-      case 'grandfather':
-        return <span className="text-5xl">👴</span>;
+        return <RiverIllustration className={sizeClass} />;
+      case 'rainbow':
+        return <RainbowIllustration className={sizeClass} />;
+
+      // Escuela
+      case 'school':
+        return <SchoolIllustration className={sizeClass} />;
+      case 'pencil':
+        return <PencilIllustration className={sizeClass} />;
+      case 'book':
+        return <BookIllustration className={sizeClass} />;
+      case 'chair':
+        return <ChairIllustration className={sizeClass} />;
+      case 'table':
+        return <TableIllustration className={sizeClass} />;
+      case 'backpack':
+        return <BackpackIllustration className={sizeClass} />;
+
+      // Emociones
+      case 'smile':
+        return <EmotionIllustration mood="happy" className={sizeClass} />;
+      case 'frown':
+        return <EmotionIllustration mood="sad" className={sizeClass} />;
+      case 'angry':
+        return <EmotionIllustration mood="angry" className={sizeClass} />;
+      case 'surprise':
+        return <EmotionIllustration mood="scared" className={sizeClass} />;
+      case 'calm':
+        return <EmotionIllustration mood="calm" className={sizeClass} />;
+
+      // Actividades
+      case 'bed':
+        return <SleepIllustration className={sizeClass} />;
+      case 'utensils':
+        return <EatIllustration className={sizeClass} />;
+      case 'play':
+        return <PlayIllustration className={sizeClass} />;
+      case 'study':
+        return <StudyIllustration className={sizeClass} />;
+      case 'dance':
+        return <DanceIllustration className={sizeClass} />;
+      case 'wash':
+        return <WashHandsIllustration className={sizeClass} />;
+
       default:
-        return <span className="text-5xl">✨</span>;
+        return <StarIllustration className={sizeClass} />;
     }
   };
 

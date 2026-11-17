@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { VideoStory, AdminVideoItem, AdminAudioItem, AppLanguage, QuechuaDialect } from '../../types';
 import { VIDEO_STORIES_DATA } from '../../data/videoStoriesData';
 import { VideoPlayerModal } from './VideoPlayerModal';
@@ -6,6 +6,11 @@ import { CustomVideoPlayerModal } from './CustomVideoPlayerModal';
 import { AudioPlayerModal } from './AudioPlayerModal';
 import { useAdmin } from '../../context/AdminContext';
 import { audioService } from '../../services/audioService';
+import {
+  getCachedOfflineVideoIds,
+  getOfflinePlayableVideoUrl,
+  precacheAllStoryVideos,
+} from '../../services/offlineVideoCache';
 import {
   Play,
   Film,
@@ -20,6 +25,9 @@ import {
   Music,
   Clock,
   Volume2,
+  CheckCircle2,
+  DownloadCloud,
+  WifiOff,
 } from 'lucide-react';
 
 interface VideosModuleProps {
@@ -37,6 +45,69 @@ export const VideosModule: React.FC<VideosModuleProps> = ({
   const [selectedCustomVideo, setSelectedCustomVideo] = useState<AdminVideoItem | null>(null);
   const [selectedAudio, setSelectedAudio] = useState<AdminAudioItem | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('todos');
+  const [cachedOfflineIds, setCachedOfflineIds] = useState<Set<string>>(new Set());
+  const [isSyncingOffline, setIsSyncingOffline] = useState(false);
+  const [offlineThumbUrls, setOfflineThumbUrls] = useState<Record<string, string>>({});
+  const createdThumbUrlsRef = useRef<string[]>([]);
+
+  const mp4BuiltinStories = VIDEO_STORIES_DATA.filter((s) => Boolean(s.videoUrl));
+
+  const runOfflinePrecache = async () => {
+    if (isSyncingOffline) return;
+    setIsSyncingOffline(true);
+    try {
+      const updated = await precacheAllStoryVideos(VIDEO_STORIES_DATA, (ids) => {
+        setCachedOfflineIds(new Set(ids));
+      });
+      setCachedOfflineIds(new Set(updated));
+    } finally {
+      setIsSyncingOffline(false);
+    }
+  };
+
+  useEffect(() => {
+    let active = true;
+    getCachedOfflineVideoIds(VIDEO_STORIES_DATA).then((ids) => {
+      if (!active) return;
+      setCachedOfflineIds(ids);
+      if (ids.size < mp4BuiltinStories.length && typeof navigator !== 'undefined' && navigator.onLine) {
+        void runOfflinePrecache();
+      }
+    });
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Resolve local offline blob URLs for card thumbnail previews when cached in IndexedDB
+  useEffect(() => {
+    let active = true;
+    mp4BuiltinStories.forEach((story) => {
+      if (!story.videoUrl || !cachedOfflineIds.has(story.id) || offlineThumbUrls[story.id]) return;
+      getOfflinePlayableVideoUrl(story.id, story.videoUrl).then(({ url, isObjectUrl }) => {
+        if (!active) {
+          if (isObjectUrl) URL.revokeObjectURL(url);
+          return;
+        }
+        if (isObjectUrl) {
+          createdThumbUrlsRef.current.push(url);
+          setOfflineThumbUrls((prev) => ({ ...prev, [story.id]: url }));
+        }
+      });
+    });
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cachedOfflineIds]);
+
+  useEffect(() => {
+    return () => {
+      createdThumbUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
+      createdThumbUrlsRef.current = [];
+    };
+  }, []);
 
   const categories = [
     { id: 'todos', label: appLang === 'quechua' ? 'Llapan (Todos)' : 'Todos los videos' },
@@ -148,8 +219,8 @@ export const VideosModule: React.FC<VideosModuleProps> = ({
 
       {mediaView === 'videos' ? (
         <>
-          {/* Categories Filter Strip */}
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm">
+          {/* Categories Filter Strip + Offline Videos Status */}
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
               {categories.map((cat) => {
                 const isCur = activeCategory === cat.id;
@@ -172,6 +243,49 @@ export const VideosModule: React.FC<VideosModuleProps> = ({
                 );
               })}
             </div>
+
+            {mp4BuiltinStories.length > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/70">
+                <div className="flex items-center gap-2 text-xs font-bold">
+                  {cachedOfflineIds.size >= mp4BuiltinStories.length ? (
+                    <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      <span>
+                        {mp4BuiltinStories.length}/{mp4BuiltinStories.length} videos de cuentos guardados para ver sin internet
+                      </span>
+                    </span>
+                  ) : isSyncingOffline ? (
+                    <span className="inline-flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+                      <DownloadCloud className="w-4 h-4 shrink-0 animate-bounce" />
+                      <span>
+                        Guardando videos sin internet ({cachedOfflineIds.size}/{mp4BuiltinStories.length})...
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                      <WifiOff className="w-4 h-4 shrink-0 text-amber-500" />
+                      <span>
+                        {cachedOfflineIds.size}/{mp4BuiltinStories.length} videos de cuentos listos sin internet
+                      </span>
+                    </span>
+                  )}
+                </div>
+
+                {cachedOfflineIds.size < mp4BuiltinStories.length && !isSyncingOffline && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      audioService.playPop();
+                      void runOfflinePrecache();
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm active:scale-95 transition cursor-pointer"
+                  >
+                    <DownloadCloud className="w-3.5 h-3.5" />
+                    <span>Guardar todos sin internet</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Videos Grid (Admin Custom Videos first, then Built-in Stories) */}
@@ -248,7 +362,7 @@ export const VideosModule: React.FC<VideosModuleProps> = ({
                 >
                   {story.videoUrl && (
                     <video
-                      src={`${story.videoUrl}#t=2`}
+                      src={`${offlineThumbUrls[story.id] || story.videoUrl}#t=2`}
                       muted
                       playsInline
                       preload="metadata"
@@ -259,6 +373,22 @@ export const VideosModule: React.FC<VideosModuleProps> = ({
                   <div className="relative z-10 w-16 h-16 rounded-full bg-white/90 text-purple-700 shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Play className="w-7 h-7 fill-purple-700 ml-1" />
                   </div>
+                  {story.videoUrl && (
+                    <div
+                      className={`absolute top-3 left-3 z-10 px-2.5 py-1 rounded-lg text-[10px] font-bold text-white flex items-center gap-1 ${
+                        cachedOfflineIds.has(story.id) ? 'bg-emerald-600/90' : 'bg-black/65'
+                      }`}
+                    >
+                      {cachedOfflineIds.has(story.id) ? (
+                        <>
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>Listo sin internet</span>
+                        </>
+                      ) : (
+                        <span>Video cuento</span>
+                      )}
+                    </div>
+                  )}
                   <div className="absolute bottom-3 right-3 z-10 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-sm text-[11px] font-bold text-white flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     <span>{story.durationSeconds}s</span>
@@ -289,7 +419,11 @@ export const VideosModule: React.FC<VideosModuleProps> = ({
                   <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-xs font-bold text-purple-600 dark:text-purple-400">
                     <span>{appLang === 'quechua' ? 'Qhaway (Reproducir)' : 'Ver video'}</span>
                     <span className="text-slate-500 dark:text-slate-400 font-medium">
-                      {story.videoUrl ? `${story.scenes.length} subtítulos` : 'Offline'}
+                      {story.videoUrl
+                        ? cachedOfflineIds.has(story.id)
+                          ? `Offline · ${story.scenes.length} subtítulos`
+                          : `${story.scenes.length} subtítulos`
+                        : 'Offline'}
                     </span>
                   </div>
                 </div>

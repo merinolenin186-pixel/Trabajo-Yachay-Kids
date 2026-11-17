@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { VideoStory, AppLanguage, QuechuaDialect } from '../../types';
 import { audioService } from '../../services/audioService';
+import { getOfflinePlayableVideoUrl } from '../../services/offlineVideoCache';
 import {
   Play,
   Pause,
   RotateCcw,
   Volume2,
-  VolumeX,
   X,
-  Maximize2,
   Subtitles,
   Gauge,
-  Sparkles,
+  WifiOff,
 } from 'lucide-react';
 import {
   SunIllustration,
@@ -45,18 +44,47 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   const [currentSceneIdx, setCurrentSceneIdx] = useState(0);
   const [subtitleMode, setSubtitleMode] = useState<SubtitleMode>('auto');
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
+  const [resolvedVideoSrc, setResolvedVideoSrc] = useState<string | null>(null);
+  const [videoLoadError, setVideoLoadError] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const hasVideoFile = Boolean(story.videoUrl);
   const currentScene = story.scenes[currentSceneIdx] || story.scenes[0];
 
+  // Resolve MP4 from local offline IndexedDB / Cache Storage first, revoking blob URL on cleanup
+  useEffect(() => {
+    if (!isOpen || !story.videoUrl) {
+      setResolvedVideoSrc(null);
+      setVideoLoadError(false);
+      return;
+    }
+
+    let active = true;
+    let createdObjectUrl: string | null = null;
+    setVideoLoadError(false);
+
+    getOfflinePlayableVideoUrl(story.id, story.videoUrl).then(({ url, isObjectUrl }) => {
+      if (!active) {
+        if (isObjectUrl) URL.revokeObjectURL(url);
+        return;
+      }
+      if (isObjectUrl) createdObjectUrl = url;
+      setResolvedVideoSrc(url);
+    });
+
+    return () => {
+      active = false;
+      if (createdObjectUrl) URL.revokeObjectURL(createdObjectUrl);
+    };
+  }, [isOpen, story.id, story.videoUrl]);
+
   // Sync playback rate for native MP4 videos
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.playbackRate = playbackSpeed;
     }
-  }, [playbackSpeed, isOpen, story.id]);
+  }, [playbackSpeed, isOpen, story.id, resolvedVideoSrc]);
 
   // Reset scene index when opening a new story
   useEffect(() => {
@@ -336,22 +364,40 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           }`}
         >
           {hasVideoFile ? (
-            <video
-              ref={videoRef}
-              src={story.videoUrl}
-              controls
-              autoPlay
-              playsInline
-              preload="metadata"
-              className="w-full h-full object-contain bg-black"
-              onLoadedMetadata={(e) => {
-                e.currentTarget.playbackRate = playbackSpeed;
-              }}
-              onTimeUpdate={(e) => handleVideoTimeUpdate(e.currentTarget.currentTime)}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-              onEnded={() => setIsPlaying(false)}
-            />
+            videoLoadError ? (
+              <div className="p-6 text-center text-white space-y-2 max-w-sm">
+                <WifiOff className="w-10 h-10 text-amber-400 mx-auto" />
+                <p className="text-sm font-bold font-['Fredoka']">
+                  Este cuento aún no se terminó de guardar en el dispositivo
+                </p>
+                <p className="text-xs text-slate-300">
+                  Conéctate a internet una sola vez para guardarlo automáticamente y poder verlo siempre sin conexión.
+                </p>
+              </div>
+            ) : resolvedVideoSrc ? (
+              <video
+                ref={videoRef}
+                src={resolvedVideoSrc}
+                controls
+                autoPlay
+                playsInline
+                preload="auto"
+                className="w-full h-full object-contain bg-black"
+                onLoadedMetadata={(e) => {
+                  e.currentTarget.playbackRate = playbackSpeed;
+                  setVideoLoadError(false);
+                }}
+                onTimeUpdate={(e) => handleVideoTimeUpdate(e.currentTarget.currentTime)}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                onEnded={() => setIsPlaying(false)}
+                onError={() => setVideoLoadError(true)}
+              />
+            ) : (
+              <div className="text-xs font-bold text-slate-300 animate-pulse">
+                Cargando video sin conexión...
+              </div>
+            )
           ) : (
             <>
               {renderBackground()}

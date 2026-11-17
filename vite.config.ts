@@ -39,10 +39,28 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,webp,svg,woff,woff2}'],
+          globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,webp,svg,woff,woff2,mp4}'],
+          maximumFileSizeToCacheInBytes: 25 * 1024 * 1024,
           cleanupOutdatedCaches: true,
           skipWaiting: true,
           clientsClaim: true,
+          runtimeCaching: [
+            {
+              urlPattern: /\.mp4$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'yachay-videos-offline-v1',
+                rangeRequests: true,
+                cacheableResponse: {
+                  statuses: [200],
+                },
+                expiration: {
+                  maxEntries: 20,
+                  maxAgeSeconds: 60 * 60 * 24 * 365,
+                },
+              },
+            },
+          ],
         },
         devOptions: {
           enabled: true,

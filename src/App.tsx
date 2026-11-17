@@ -29,6 +29,8 @@ import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AccessibilityBar } from './components/accessibility/AccessibilityBar';
 import { NonVerbalBoardModal } from './components/accessibility/NonVerbalBoardModal';
 import { audioService } from './services/audioService';
+import { VIDEO_STORIES_DATA } from './data/videoStoriesData';
+import { precacheAllStoryVideos } from './services/offlineVideoCache';
 import { WifiOff, Heart, MessageSquare } from 'lucide-react';
 
 const STORAGE_LANG_KEY = 'yachay_kids_lang';
@@ -67,6 +69,16 @@ function AppContent() {
     } catch {
       // Ignore storage errors
     }
+  }, []);
+
+  // Automatically store built-in MP4 story videos locally in IndexedDB so they play 100% offline
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (typeof navigator === 'undefined' || navigator.onLine) {
+        void precacheAllStoryVideos(VIDEO_STORIES_DATA);
+      }
+    }, 1500);
+    return () => clearTimeout(timer);
   }, []);
 
   // Ensure current tab stays valid if hidden by admin or logged out from admin tab

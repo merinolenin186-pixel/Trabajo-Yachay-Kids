@@ -46,6 +46,21 @@ export async function getMediaBlob(id: string): Promise<Blob | null> {
   }
 }
 
+export async function hasMediaBlob(id: string): Promise<boolean> {
+  try {
+    const db = await openMediaDb();
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.getKey(id);
+      req.onsuccess = () => resolve(req.result !== undefined);
+      req.onerror = () => resolve(false);
+    });
+  } catch {
+    return false;
+  }
+}
+
 export async function getMediaBlobUrl(id: string): Promise<string | null> {
   const blob = await getMediaBlob(id);
   if (!blob) return null;

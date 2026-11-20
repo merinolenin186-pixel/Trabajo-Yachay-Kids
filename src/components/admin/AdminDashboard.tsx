@@ -762,6 +762,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     { id: 'colors', label: 'Juego 3: Los Colores' },
     { id: 'animals', label: 'Juego 4: Animales del Perú' },
     { id: 'foods', label: 'Juego 5: Frutas y Alimentos' },
+    { id: 'match', label: 'Juego 6: Une la Imagen con su Nombre' },
+    { id: 'counting', label: 'Juego 7: ¿Cuántos Objetos Hay?' },
+    { id: 'pictureColors', label: 'Juego 8: ¿Qué Colores Ves en la Imagen?' },
+    { id: 'shapes', label: 'Juego 9: Figuras Geométricas' },
+    { id: 'shadows', label: 'Juego 10: Encuentra la Sombra' },
+    { id: 'sizes', label: 'Juego 11: Grande, Pequeño y Opuestos' },
+    { id: 'series', label: 'Juego 12: Completa la Serie' },
   ];
 
   const pictogramCats = [

@@ -1,16 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { AppLanguage, QuechuaDialect, AnimalItem } from '../../types';
 import { ANIMALS_DATA } from '../../data/gamesData';
 import { audioService } from '../../services/audioService';
 import { useUserProfile } from '../../context/UserProfileContext';
 import confetti from 'canvas-confetti';
-import { ChevronLeft, Volume2, CheckCircle2, RotateCcw, Sparkles } from 'lucide-react';
+import { ChevronLeft, Volume2, CheckCircle2, AudioLines } from 'lucide-react';
 import {
   LlamaIllustration,
   CondorIllustration,
   CuyIllustration,
   FoxIllustration,
 } from '../icons/AppIllustrations';
+import { PumaIllustration } from '../icons/PictogramIllustrations';
 
 interface AnimalsGameProps {
   appLang: AppLanguage;
@@ -27,6 +28,7 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
   const { showPhonetics, showDialectNotes, cardScale } = profile.config;
   const [activeTab, setActiveTab] = useState<'cards' | 'trivia'>('cards');
   const [selectedAnimal, setSelectedAnimal] = useState<AnimalItem>(ANIMALS_DATA[0]);
+  const [playingSoundId, setPlayingSoundId] = useState<string | null>(null);
 
   // Trivia state
   const [triviaIndex, setTriviaIndex] = useState(0);
@@ -34,16 +36,55 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
   const [triviaFeedback, setTriviaFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [triviaScore, setTriviaScore] = useState(0);
 
+  const timersRef = useRef<number[]>([]);
+
+  const clearScheduledAudio = () => {
+    timersRef.current.forEach(t => window.clearTimeout(t));
+    timersRef.current = [];
+  };
+
+  useEffect(() => {
+    return () => {
+      clearScheduledAudio();
+    };
+  }, []);
+
   const currentTrivia = ANIMALS_DATA[triviaIndex % ANIMALS_DATA.length];
 
+  const getQuechuaAnimalName = (animal: AnimalItem) =>
+    dialect === 'chanka' && animal.name.dialectNotes?.chanka
+      ? animal.name.dialectNotes.chanka
+      : dialect === 'collao' && animal.name.dialectNotes?.collao
+      ? animal.name.dialectNotes.collao
+      : animal.name.quechua;
+
   const playAnimalAudio = (animal: AnimalItem) => {
-    const word =
-      dialect === 'chanka' && animal.name.dialectNotes?.chanka
-        ? animal.name.dialectNotes.chanka
-        : dialect === 'collao' && animal.name.dialectNotes?.collao
-        ? animal.name.dialectNotes.collao
-        : animal.name.quechua;
-    audioService.speakQuechua(word, dialect);
+    const word = getQuechuaAnimalName(animal);
+    if (appLang === 'quechua') {
+      audioService.speakQuechua(word, dialect);
+    } else {
+      audioService.speakSpanish(animal.name.spanish);
+    }
+  };
+
+  const playSensoryAnimalExperience = (animal: AnimalItem, alsoSpeakName = true) => {
+    clearScheduledAudio();
+    audioService.stop();
+    setPlayingSoundId(animal.id);
+
+    const soundDurationMs = audioService.playAnimalSound(animal.iconName) || 750;
+
+    const endVisualTimer = window.setTimeout(() => {
+      setPlayingSoundId(prev => (prev === animal.id ? null : prev));
+    }, soundDurationMs);
+    timersRef.current.push(endVisualTimer);
+
+    if (alsoSpeakName) {
+      const speakTimer = window.setTimeout(() => {
+        playAnimalAudio(animal);
+      }, soundDurationMs + 120);
+      timersRef.current.push(speakTimer);
+    }
   };
 
   const renderAnimalIllustration = (name: string, sizeClass = 'w-24 h-24') => {
@@ -55,8 +96,9 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
         return <CondorIllustration className={sizeClass} />;
       case 'cuy':
         return <CuyIllustration className={sizeClass} />;
-      case 'fox':
       case 'puma':
+        return <PumaIllustration className={sizeClass} />;
+      case 'fox':
       default:
         return <FoxIllustration className={sizeClass} />;
     }
@@ -65,15 +107,25 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
   const handleSelectAnswer = (index: number) => {
     setSelectedAnswer(index);
     if (index === currentTrivia.funQuestion.correctIndex) {
-      audioService.playSuccessSound();
+      clearScheduledAudio();
       setTriviaFeedback('correct');
       setTriviaScore(s => s + 1);
       awardStar(`animals-${currentTrivia.id}`);
       confetti({
-        particleCount: 50,
-        spread: 70,
+        particleCount: 55,
+        spread: 75,
         origin: { y: 0.6 },
       });
+
+      // Immersive sensory reward: real animal sound followed by joyful chime
+      setPlayingSoundId(currentTrivia.id);
+      const soundMs = audioService.playAnimalSound(currentTrivia.iconName) || 800;
+
+      const chimeTimer = window.setTimeout(() => {
+        audioService.playSuccessSound();
+        setPlayingSoundId(prev => (prev === currentTrivia.id ? null : prev));
+      }, soundMs + 100);
+      timersRef.current.push(chimeTimer);
     } else {
       audioService.playErrorSound();
       setTriviaFeedback('wrong');
@@ -81,6 +133,8 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
   };
 
   const handleNextTrivia = () => {
+    clearScheduledAudio();
+    setPlayingSoundId(null);
     audioService.playPop();
     setSelectedAnswer(null);
     setTriviaFeedback(null);
@@ -136,28 +190,55 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
           {/* Spotlight Animal */}
           <div className="bg-gradient-to-b from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-900 rounded-3xl p-4 sm:p-8 shadow-sm border-2 border-amber-300 dark:border-amber-700 text-center">
             <div className="flex flex-col items-center">
-              <div className="p-4 rounded-3xl bg-white dark:bg-slate-800 shadow-sm border border-amber-200 dark:border-slate-700 mb-4 animate-bounce-gentle">
+              <button
+                type="button"
+                onClick={() => playSensoryAnimalExperience(selectedAnimal, false)}
+                className={`relative p-4 rounded-3xl bg-white dark:bg-slate-800 shadow-sm border-2 transition-all mb-4 cursor-pointer active:scale-95 ${
+                  playingSoundId === selectedAnimal.id
+                    ? 'border-emerald-500 ring-4 ring-emerald-300/60 scale-105'
+                    : 'border-amber-200 dark:border-slate-700 hover:border-amber-400 animate-bounce-gentle'
+                }`}
+                title="Toca el dibujo para escuchar el sonido real del animal"
+                aria-label={`Escuchar sonido real de ${selectedAnimal.name.spanish}`}
+              >
                 {renderAnimalIllustration(selectedAnimal.iconName, 'w-24 h-24 sm:w-28 sm:h-28')}
-              </div>
+                {playingSoundId === selectedAnimal.id && (
+                  <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-emerald-600 text-white text-[11px] font-extrabold inline-flex items-center gap-1 shadow whitespace-nowrap animate-pulse">
+                    <AudioLines className="w-3 h-3" />
+                    <span>Sonando...</span>
+                  </span>
+                )}
+              </button>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
                 <h3 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white font-['Fredoka']">
-                  {dialect === 'chanka' && selectedAnimal.name.dialectNotes?.chanka
-                    ? selectedAnimal.name.dialectNotes.chanka
-                    : dialect === 'collao' && selectedAnimal.name.dialectNotes?.collao
-                    ? selectedAnimal.name.dialectNotes.collao
-                    : selectedAnimal.name.quechua}
+                  {getQuechuaAnimalName(selectedAnimal)}
                 </h3>
                 <button
                   onClick={() => playAnimalAudio(selectedAnimal)}
-                  className="p-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-sm active:scale-95 transition"
+                  className="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm active:scale-95 transition inline-flex items-center gap-1.5 cursor-pointer"
                   title="Escuchar pronunciación"
                 >
-                  <Volume2 className="w-5 h-5" />
+                  <Volume2 className="w-4 h-4" />
+                  <span>Nombre</span>
+                </button>
+                <button
+                  onClick={() => playSensoryAnimalExperience(selectedAnimal, false)}
+                  className={`px-3 py-2 rounded-xl text-white text-xs font-bold shadow-sm active:scale-95 transition inline-flex items-center gap-1.5 cursor-pointer ${
+                    playingSoundId === selectedAnimal.id
+                      ? 'bg-emerald-600 ring-2 ring-emerald-300'
+                      : 'bg-teal-600 hover:bg-teal-700'
+                  }`}
+                  title="Escuchar sonido real del animal"
+                >
+                  <AudioLines className="w-4 h-4" />
+                  <span>
+                    {appLang === 'quechua' ? 'Waqaynin uyariy' : 'Sonido real'}
+                  </span>
                 </button>
               </div>
 
-              <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 mt-1">
+              <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 mt-1.5">
                 Español: {selectedAnimal.name.spanish}
                 {showPhonetics && selectedAnimal.name.phonetic && (
                   <> · Fonética: [{selectedAnimal.name.phonetic}]</>
@@ -183,16 +264,21 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
                   </span>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-white/90 dark:bg-slate-800/90 border border-amber-200 dark:border-slate-700">
-                  <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 block mb-0.5">
-                    {appLang === 'quechua' ? 'Waqaynin (Sonido):' : 'Sonido:'}
+                <button
+                  type="button"
+                  onClick={() => playSensoryAnimalExperience(selectedAnimal, false)}
+                  className="p-3 rounded-2xl bg-white/90 dark:bg-slate-800/90 border border-amber-200 dark:border-slate-700 hover:border-teal-400 text-left transition cursor-pointer active:scale-98"
+                >
+                  <span className="text-[11px] font-bold text-teal-700 dark:text-teal-400 flex items-center justify-between mb-0.5">
+                    <span>{appLang === 'quechua' ? 'Waqaynin (Toca para oír):' : 'Sonido (Toca para oír):'}</span>
+                    <AudioLines className="w-3.5 h-3.5" />
                   </span>
                   <span className="text-xs text-slate-700 dark:text-slate-200">
                     {appLang === 'quechua'
                       ? selectedAnimal.soundDescription.quechua
                       : selectedAnimal.soundDescription.spanish}
                   </span>
-                </div>
+                </button>
               </div>
 
               <p className="mt-4 text-xs text-slate-600 dark:text-slate-400 max-w-md">
@@ -206,7 +292,9 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
           {/* Animal Selector Grid */}
           <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-3xl border border-slate-200 dark:border-slate-700">
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-3 sm:mb-4">
-              {appLang === 'quechua' ? 'Uywakunata akllay:' : 'Selecciona un animal para conocerlo:'}
+              {appLang === 'quechua'
+                ? 'Uywakunata akllay waqayninta uyarinapaq:'
+                : 'Toca un animal para escuchar su sonido real y su nombre:'}
             </span>
 
             <div
@@ -216,16 +304,18 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
             >
               {ANIMALS_DATA.map(ani => {
                 const isCur = ani.id === selectedAnimal.id;
+                const isSoundPlaying = playingSoundId === ani.id;
                 return (
                   <button
                     key={ani.id}
                     onClick={() => {
-                      audioService.playPop();
                       setSelectedAnimal(ani);
-                      playAnimalAudio(ani);
+                      playSensoryAnimalExperience(ani, true);
                     }}
                     className={`p-2.5 sm:p-3 rounded-2xl border-2 flex items-center gap-2.5 sm:gap-3 min-h-[56px] transition active:scale-95 cursor-pointer ${
-                      isCur
+                      isSoundPlaying
+                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 ring-2 ring-emerald-300 shadow-md'
+                        : isCur
                         ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/40 shadow-sm'
                         : 'border-slate-200 dark:border-slate-700 hover:border-amber-300 bg-white dark:bg-slate-800'
                     }`}
@@ -233,7 +323,7 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
                     <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center shrink-0">
                       {renderAnimalIllustration(ani.iconName, 'w-9 h-9 sm:w-10 sm:h-10')}
                     </div>
-                    <div className="text-left overflow-hidden min-w-0">
+                    <div className="text-left overflow-hidden min-w-0 flex-1">
                       <span className="block text-sm font-bold text-slate-900 dark:text-white font-['Fredoka'] truncate">
                         {ani.name.quechua}
                       </span>
@@ -241,6 +331,9 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
                         {ani.name.spanish}
                       </span>
                     </div>
+                    {isSoundPlaying && (
+                      <AudioLines className="w-4 h-4 text-emerald-600 shrink-0 animate-pulse" />
+                    )}
                   </button>
                 );
               })}
@@ -260,9 +353,24 @@ export const AnimalsGame: React.FC<AnimalsGameProps> = ({
           </div>
 
           <div className="space-y-3">
-            <div className="p-4 rounded-3xl bg-amber-50 dark:bg-slate-900 inline-block border border-amber-200 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={() => playSensoryAnimalExperience(currentTrivia, false)}
+              className={`relative p-4 rounded-3xl bg-amber-50 dark:bg-slate-900 inline-block border-2 transition-all cursor-pointer active:scale-95 ${
+                playingSoundId === currentTrivia.id
+                  ? 'border-emerald-500 ring-4 ring-emerald-300/60 scale-105'
+                  : 'border-amber-200 dark:border-slate-700 hover:border-amber-400'
+              }`}
+              title="Toca la imagen para escuchar su sonido"
+            >
               {renderAnimalIllustration(currentTrivia.iconName, 'w-24 h-24')}
-            </div>
+              {playingSoundId === currentTrivia.id && (
+                <span className="mt-1.5 px-2.5 py-0.5 rounded-full bg-emerald-600 text-white text-[11px] font-extrabold inline-flex items-center gap-1 shadow animate-pulse">
+                  <AudioLines className="w-3 h-3" />
+                  <span>¡Escucha al {currentTrivia.name.spanish}!</span>
+                </span>
+              )}
+            </button>
             <h3 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-white font-['Fredoka']">
               {appLang === 'quechua'
                 ? currentTrivia.funQuestion.question.quechua

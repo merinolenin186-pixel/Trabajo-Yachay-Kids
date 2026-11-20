@@ -14,6 +14,13 @@ import { MemoryGame } from './components/games/MemoryGame';
 import { ColorsGame } from './components/games/ColorsGame';
 import { AnimalsGame } from './components/games/AnimalsGame';
 import { FoodsGame } from './components/games/FoodsGame';
+import { WordMatchGame } from './components/games/WordMatchGame';
+import { CountingQuizGame } from './components/games/CountingQuizGame';
+import { PictureColorsGame } from './components/games/PictureColorsGame';
+import { ShapesGame } from './components/games/ShapesGame';
+import { ShadowsMatchGame } from './components/games/ShadowsMatchGame';
+import { SizesOppositesGame } from './components/games/SizesOppositesGame';
+import { SeriesPatternGame } from './components/games/SeriesPatternGame';
 import { TranslatorModule } from './components/translator/TranslatorModule';
 import { PictogramsModule } from './components/pictograms/PictogramsModule';
 import { VideosModule } from './components/videos/VideosModule';
@@ -255,6 +262,55 @@ function AppContent() {
             )}
             {currentGameSubTab === 'foods' && (
               <FoodsGame
+                appLang={appLang}
+                dialect={dialect}
+                onBackToHub={() => setCurrentGameSubTab('hub')}
+              />
+            )}
+            {currentGameSubTab === 'match' && (
+              <WordMatchGame
+                appLang={appLang}
+                dialect={dialect}
+                onBackToHub={() => setCurrentGameSubTab('hub')}
+              />
+            )}
+            {currentGameSubTab === 'counting' && (
+              <CountingQuizGame
+                appLang={appLang}
+                dialect={dialect}
+                onBackToHub={() => setCurrentGameSubTab('hub')}
+              />
+            )}
+            {currentGameSubTab === 'pictureColors' && (
+              <PictureColorsGame
+                appLang={appLang}
+                dialect={dialect}
+                onBackToHub={() => setCurrentGameSubTab('hub')}
+              />
+            )}
+            {currentGameSubTab === 'shapes' && (
+              <ShapesGame
+                appLang={appLang}
+                dialect={dialect}
+                onBackToHub={() => setCurrentGameSubTab('hub')}
+              />
+            )}
+            {currentGameSubTab === 'shadows' && (
+              <ShadowsMatchGame
+                appLang={appLang}
+                dialect={dialect}
+                onBackToHub={() => setCurrentGameSubTab('hub')}
+              />
+            )}
+            {currentGameSubTab === 'sizes' && (
+              <SizesOppositesGame
+                appLang={appLang}
+                dialect={dialect}
+                onBackToHub={() => setCurrentGameSubTab('hub')}
+              />
+            )}
+            {currentGameSubTab === 'series' && (
+              <SeriesPatternGame
                 appLang={appLang}
                 dialect={dialect}
                 onBackToHub={() => setCurrentGameSubTab('hub')}

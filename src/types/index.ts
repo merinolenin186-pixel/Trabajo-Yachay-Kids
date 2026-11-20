@@ -155,7 +155,20 @@ export interface VideoScene {
 
 export type MainTab = 'games' | 'translator' | 'pictograms' | 'videos' | 'settings' | 'admin';
 
-export type GameSubTab = 'hub' | 'numbers' | 'memory' | 'colors' | 'animals' | 'foods';
+export type GameSubTab =
+  | 'hub'
+  | 'numbers'
+  | 'memory'
+  | 'colors'
+  | 'animals'
+  | 'foods'
+  | 'match'
+  | 'counting'
+  | 'pictureColors'
+  | 'shapes'
+  | 'shadows'
+  | 'sizes'
+  | 'series';
 
 export interface ThemeConfig {
   presetId: 'inti' | 'titicaca' | 'pachamama' | 'kantuta' | 'kuychi' | 'custom';

@@ -3,6 +3,8 @@
  * 100% Offline Web Audio API & Speech Synthesis
  */
 
+import { synthesizeAnimalSound } from './animalAudioEngine';
+
 class AudioService {
   private ctx: AudioContext | null = null;
   private isMuted: boolean = false;
@@ -170,6 +172,18 @@ class AudioService {
       osc.stop(now + 0.38);
     } catch (e) {
       console.warn('Audio effect error', e);
+    }
+  }
+
+  // Sensory realistic animal vocalization (100% offline Web Audio synthesis)
+  public playAnimalSound(animalType: string): number {
+    if (this.isMuted) return 0;
+    try {
+      const ctx = this.getAudioContext();
+      return synthesizeAnimalSound(ctx, animalType);
+    } catch (e) {
+      console.warn('Animal sound playback error', e);
+      return 0;
     }
   }
 

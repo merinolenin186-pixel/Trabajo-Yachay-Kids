@@ -18,6 +18,7 @@ import {
   CornIllustration,
   RainbowIllustration,
 } from '../icons/AppIllustrations';
+import { PictogramDrawing } from '../icons/PictogramDrawing';
 import { Sparkles, ArrowRight, Layers, Volume2, Play, Film, Music, X, Star } from 'lucide-react';
 
 interface GamesHubProps {
@@ -38,12 +39,106 @@ export const GamesHub: React.FC<GamesHubProps> = ({
   const [activeCustomAudio, setActiveCustomAudio] = useState<AdminAudioItem | null>(null);
 
   const isLargeCards = profile.config.cardScale === 'large';
+  const [gameFilter, setGameFilter] = useState<'all' | 'inicial' | 'vocab'>('all');
 
   const gamesList = [
     {
+      id: 'match' as GameSubTab,
+      group: 'inicial' as const,
+      isNew: true,
+      titleQuechua: '1. Rikchayta Sutinwan Tinkuchiy',
+      titleSpanish: '1. Lleva la imagen con su nombre',
+      descQuechua: 'Rikchaykunata sutinkunawan tinkuchiy pukllaspa.',
+      descSpanish: 'Une o arrastra cada dibujo con su nombre en quechua y español.',
+      icon: <PictogramDrawing drawing="dog" className="w-16 h-16" />,
+      colorClass: 'from-amber-500 to-orange-500',
+      badgeQuechua: 'Inicial · Tinkuchiy',
+      badgeSpanish: 'Nuevo · Asociar',
+    },
+    {
+      id: 'counting' as GameSubTab,
+      group: 'inicial' as const,
+      isNew: true,
+      titleQuechua: '2. ¿Haykaqtaq Kachkan? (Yupay)',
+      titleSpanish: '2. ¿Cuántos objetos hay?',
+      descQuechua: 'Dibujokunata yupaspa allin yupayta akllay.',
+      descSpanish: 'Toca los dibujos para contarlos y marca el número correcto.',
+      icon: <PictogramDrawing drawing="num-5" className="w-16 h-16" />,
+      colorClass: 'from-sky-500 to-indigo-500',
+      badgeQuechua: 'Inicial · Yupay',
+      badgeSpanish: 'Nuevo · Contar',
+    },
+    {
+      id: 'pictureColors' as GameSubTab,
+      group: 'inicial' as const,
+      isNew: true,
+      titleQuechua: '3. ¿Ima Llimpikunataq? (Dibujo)',
+      titleSpanish: '3. ¿Qué colores ves en la imagen?',
+      descQuechua: 'Sumaq dibujokunapi llimpikunata qhawaspa akllay.',
+      descSpanish: 'Observa escenas coloridas y marca todos los colores que ves.',
+      icon: <RainbowIllustration className="w-16 h-16" />,
+      colorClass: 'from-purple-500 to-pink-500',
+      badgeQuechua: 'Inicial · Llimpi',
+      badgeSpanish: 'Nuevo · Colores',
+    },
+    {
+      id: 'shapes' as GameSubTab,
+      group: 'inicial' as const,
+      isNew: true,
+      titleQuechua: '4. Figuras Geométricas',
+      titleSpanish: '4. Figuras geométricas para Inicial',
+      descQuechua: 'Muyu, tawa k\'uchu, kimsa k\'uchu, sonqo, quyllur.',
+      descSpanish: 'Aprende círculo, cuadrado, triángulo, estrella y corazón jugando.',
+      icon: <PictogramDrawing drawing="star" className="w-16 h-16" />,
+      colorClass: 'from-rose-500 to-amber-500',
+      badgeQuechua: 'Inicial · Rikchay',
+      badgeSpanish: 'Nuevo · Formas',
+    },
+    {
+      id: 'shadows' as GameSubTab,
+      group: 'inicial' as const,
+      isNew: true,
+      titleQuechua: '5. Llanthuta Tariy (Sombras)',
+      titleSpanish: '5. Encuentra la sombra correcta',
+      descQuechua: 'Yana llanthuta qhawaspa igualnin dibujota tariy.',
+      descSpanish: 'Descubre a qué animal u objeto pertenece cada silueta oscura.',
+      icon: <PictogramDrawing drawing="cat" className="w-16 h-16" />,
+      colorClass: 'from-indigo-500 to-violet-600',
+      badgeQuechua: 'Inicial · Llanthu',
+      badgeSpanish: 'Nuevo · Sombras',
+    },
+    {
+      id: 'sizes' as GameSubTab,
+      group: 'inicial' as const,
+      isNew: true,
+      titleQuechua: '6. Hatunwan Huch\'uy (Tamaños)',
+      titleSpanish: '6. Grande, pequeño y opuestos',
+      descQuechua: 'Hatun, huch\'uy, askha, aslla, hanaq, uray, kusisqa.',
+      descSpanish: 'Compara tamaños, cantidades (muchos/pocos), posiciones y emociones.',
+      icon: <PictogramDrawing drawing="smile" className="w-16 h-16" />,
+      colorClass: 'from-teal-500 to-emerald-500',
+      badgeQuechua: 'Inicial · Tupuy',
+      badgeSpanish: 'Nuevo · Comparar',
+    },
+    {
+      id: 'series' as GameSubTab,
+      group: 'inicial' as const,
+      isNew: true,
+      titleQuechua: '7. Completa la Serie',
+      titleSpanish: '7. Completa la serie lógica',
+      descQuechua: '¿Mayqen dibujotaq qatiqnin? Ordenniyta hunt\'apay.',
+      descSpanish: 'Descubre qué dibujo continúa la secuencia divertida.',
+      icon: <PictogramDrawing drawing="play" className="w-16 h-16" />,
+      colorClass: 'from-fuchsia-500 to-rose-500',
+      badgeQuechua: 'Inicial · Qatiq',
+      badgeSpanish: 'Nuevo · Secuencias',
+    },
+    {
       id: 'numbers' as GameSubTab,
-      titleQuechua: '1. Yupaykuna (Números 1-10)',
-      titleSpanish: '1. Aprendiendo los números en quechua',
+      group: 'vocab' as const,
+      isNew: false,
+      titleQuechua: '8. Yupaykuna (Números 1-10)',
+      titleSpanish: '8. Aprendiendo los números del 1 al 10',
       descQuechua: 'Hukmanta chunka kama yupasunchis sumaq pukllaywan.',
       descSpanish: 'Aprende a contar del 1 al 10 con objetos andinos, voz y desafíos.',
       icon: <SunIllustration className="w-16 h-16 animate-bounce-gentle" />,
@@ -53,8 +148,10 @@ export const GamesHub: React.FC<GamesHubProps> = ({
     },
     {
       id: 'memory' as GameSubTab,
-      titleQuechua: '2. Yuyay Pukllay (Memoria)',
-      titleSpanish: '2. Juego de memoria bilingüe',
+      group: 'vocab' as const,
+      isNew: false,
+      titleQuechua: '9. Yuyay Pukllay (Memoria)',
+      titleSpanish: '9. Juego de memoria bilingüe',
       descQuechua: 'Tarjetakunata qhawaspa iskay masintinta tarisunchis.',
       descSpanish: 'Descubre parejas ilustradas con pronunciación en quechua y español.',
       icon: <LlamaIllustration className="w-16 h-16" />,
@@ -64,8 +161,10 @@ export const GamesHub: React.FC<GamesHubProps> = ({
     },
     {
       id: 'colors' as GameSubTab,
-      titleQuechua: '3. Llimpikuna (Colores)',
-      titleSpanish: '3. Aprendamos los colores',
+      group: 'vocab' as const,
+      isNew: false,
+      titleQuechua: '10. Llimpikuna (Colores)',
+      titleSpanish: '10. Aprendamos los colores',
       descQuechua: 'Puka, anqas, q\'omer, q\'ellu... k\'uychipa llimpinkuna.',
       descSpanish: 'Reconoce colores llamativos y asócialos con la naturaleza andina.',
       icon: <RainbowIllustration className="w-16 h-16" />,
@@ -75,8 +174,10 @@ export const GamesHub: React.FC<GamesHubProps> = ({
     },
     {
       id: 'animals' as GameSubTab,
-      titleQuechua: '4. Uywakuna (Animales)',
-      titleSpanish: '4. Conociendo los animales del Perú',
+      group: 'vocab' as const,
+      isNew: false,
+      titleQuechua: '11. Uywakuna (Animales)',
+      titleSpanish: '11. Conociendo los animales del Perú',
       descQuechua: 'Llama, kuntur, wikuña, quy, puma... sumaq uywakuna.',
       descSpanish: 'Animales domésticos y silvestres del Perú con sus nombres y sonidos.',
       icon: <LlamaIllustration className="w-16 h-16" />,
@@ -86,8 +187,10 @@ export const GamesHub: React.FC<GamesHubProps> = ({
     },
     {
       id: 'foods' as GameSubTab,
-      titleQuechua: '5. Mikhunakuna (Alimentos)',
-      titleSpanish: '5. Frutas y alimentos andinos',
+      group: 'vocab' as const,
+      isNew: false,
+      titleQuechua: '12. Mikhunakuna (Alimentos)',
+      titleSpanish: '12. Frutas y alimentos andinos',
       descQuechua: 'Papa, sara choclo, kinwa, chuñu... mikhunanchiskuna.',
       descSpanish: 'Descubre los superalimentos ancestrales y juega con la canasta andina.',
       icon: <CornIllustration className="w-16 h-16" />,
@@ -97,7 +200,9 @@ export const GamesHub: React.FC<GamesHubProps> = ({
     },
   ];
 
-  const visibleGames = gamesList.filter(g => !hiddenOptions.games.includes(g.id));
+  const visibleGames = gamesList
+    .filter(g => !hiddenOptions.games.includes(g.id))
+    .filter(g => gameFilter === 'all' || g.group === gameFilter);
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -170,6 +275,30 @@ export const GamesHub: React.FC<GamesHubProps> = ({
         </div>
       </div>
 
+      {/* Filter Tabs for Easy Browsing */}
+      <div className="flex flex-wrap items-center gap-2">
+        {[
+          { id: 'all' as const, label: 'Todos los juegos (12)' },
+          { id: 'inicial' as const, label: 'Juegos de Inicial (Nuevos)' },
+          { id: 'vocab' as const, label: 'Vocabulario y Memoria' },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => {
+              audioService.playPop();
+              setGameFilter(tab.id);
+            }}
+            className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer ${
+              gameFilter === tab.id
+                ? 'bg-amber-500 text-white shadow-sm'
+                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-amber-300'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {/* Grid of Games */}
       {visibleGames.length > 0 ? (
         <div
@@ -202,7 +331,13 @@ export const GamesHub: React.FC<GamesHubProps> = ({
                   >
                     {game.icon}
                   </div>
-                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <span
+                    className={`text-xs font-extrabold px-2.5 py-1 rounded-full ${
+                      game.isNew
+                        ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                        : 'text-slate-500 dark:text-slate-400'
+                    }`}
+                  >
                     {appLang === 'quechua' ? game.badgeQuechua : game.badgeSpanish}
                   </span>
                 </div>
